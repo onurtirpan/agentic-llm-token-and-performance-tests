@@ -1,0 +1,675 @@
+<title>Ten Languages, One API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --bg: #f1f4f7;
+    --surface: #ffffff;
+    --surface-2: #e6ebf0;
+    --ink: #161b23;
+    --ink-2: #3d4753;
+    --muted: #66717e;
+    --line: #d6dde5;
+    --line-strong: #b9c3cd;
+    --accent: #0e7c86;
+    --accent-ink: #0a5f68;
+    --bad: #b02e58;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1015;
+      --surface: #14191f;
+      --surface-2: #1d242c;
+      --ink: #e7ecf2;
+      --ink-2: #b9c2cc;
+      --muted: #8a95a2;
+      --line: #242c35;
+      --line-strong: #37424e;
+      --accent: #2fb3bd;
+      --accent-ink: #6ad3da;
+      --bad: #f2708f;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0d1015;
+    --surface: #14191f;
+    --surface-2: #1d242c;
+    --ink: #e7ecf2;
+    --ink-2: #b9c2cc;
+    --muted: #8a95a2;
+    --line: #242c35;
+    --line-strong: #37424e;
+    --accent: #2fb3bd;
+    --accent-ink: #6ad3da;
+    --bad: #f2708f;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: clamp(2rem, 5vw, 4rem) clamp(1.1rem, 4vw, 2.25rem) 4.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2.75rem, 5vw, 4rem);
+  }
+
+  h1, h2, h3 {
+    font-family: "Bricolage Grotesque", "IBM Plex Sans", sans-serif;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  h1 { font-weight: 800; font-size: clamp(2.4rem, 7vw, 4rem); line-height: 1.02;
+       letter-spacing: -0.03em; }
+  h2 { font-weight: 800; font-size: clamp(1.35rem, 3vw, 1.75rem); line-height: 1.15;
+       letter-spacing: -0.02em; }
+  h3 { font-weight: 600; font-size: 1.02rem; }
+
+  p { margin: 0; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .big { font-size: clamp(1.1rem, 2.3vw, 1.3rem); color: var(--ink-2); line-height: 1.5;
+         max-width: 60ch; }
+  .say { color: var(--ink-2); max-width: 66ch; }
+
+  code {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.87em;
+    background: var(--surface-2);
+    padding: 0.12em 0.36em;
+    border-radius: 3px;
+  }
+
+  .rule { height: 3px; background: var(--accent); width: 72px; border: 0; margin: 0; }
+
+  header { display: flex; flex-direction: column; gap: 1.35rem; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .stat { background: var(--surface); padding: 0.95rem 1.1rem; display: flex;
+          flex-direction: column; gap: 0.1rem; }
+
+  .stat b {
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-weight: 800;
+    font-size: 1.6rem;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+
+  .stat span { font-family: "IBM Plex Mono", monospace; font-size: 0.63rem;
+               letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+  section { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  /* ---------- chart ---------- */
+
+  .chart {
+    display: flex; flex-direction: column; gap: 0.9rem;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 5px; padding: 1.4rem clamp(1rem, 3vw, 1.6rem);
+  }
+
+  .pair { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); align-items: center;
+          gap: 0.75rem; }
+
+  .pair .lang { font-weight: 500; font-size: 0.92rem; white-space: nowrap; }
+
+  .bars { display: flex; flex-direction: column; gap: 3px; }
+  .bar-row { display: flex; align-items: center; gap: 0.5rem; }
+
+  .bar-row .tag { font-family: "IBM Plex Mono", monospace; font-size: 0.58rem;
+                  color: var(--muted); width: 0.9rem; flex: none; }
+
+  .track { background: var(--surface-2); border-radius: 2px; height: 12px; flex: 1;
+           overflow: hidden; }
+
+  /* display:block matters — a span is inline, and inline boxes ignore width/height. */
+  .bar { display: block; height: 100%; border-radius: 2px; width: calc(var(--w) * 1%); }
+  .bar.s { background: color-mix(in oklab, var(--accent) 30%, var(--surface-2)); }
+  .bar.m { background: color-mix(in oklab, var(--accent) 60%, var(--surface-2)); }
+  .bar.l { background: var(--accent); }
+
+  .bar-row .val { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums;
+                  font-size: 0.71rem; color: var(--muted); width: 2.9rem; text-align: right;
+                  flex: none; }
+
+  .legend { display: flex; gap: 1.1rem; flex-wrap: wrap; font-family: "IBM Plex Mono", monospace;
+            font-size: 0.68rem; color: var(--muted); padding-top: 0.4rem;
+            border-top: 1px solid var(--line); }
+
+  .swatch { display: inline-block; width: 20px; height: 9px; border-radius: 2px;
+            margin-right: 0.35rem; vertical-align: middle; }
+
+  @media (max-width: 560px) {
+    .pair { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- tables ---------- */
+
+  .scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 5px; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--surface);
+          font-size: 0.88rem; }
+
+  th, td { text-align: left; padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--line);
+           white-space: nowrap; }
+
+  thead th {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.63rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--line-strong);
+    position: relative;
+  }
+
+  th.num, td.num { text-align: right; font-family: "IBM Plex Mono", monospace;
+                   font-variant-numeric: tabular-nums; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: color-mix(in oklab, var(--accent) 6%, var(--surface)); }
+  td.name { font-weight: 500; }
+  td.win { color: var(--accent-ink); font-weight: 600; }
+  td.lose { color: var(--bad); font-weight: 600; }
+
+  /* sortable headers */
+  table.sortable thead th:not([data-nosort]) { cursor: pointer; user-select: none;
+                                               padding-right: 1.5rem; }
+  table.sortable thead th:not([data-nosort]):hover { color: var(--ink); }
+  table.sortable thead th:not([data-nosort]):focus-visible { outline: 2px solid var(--accent);
+                                                             outline-offset: -2px; }
+  table.sortable thead th:not([data-nosort])::after {
+    content: "\2195";
+    position: absolute;
+    right: 0.55rem;
+    opacity: 0.35;
+    font-size: 0.85em;
+  }
+  table.sortable thead th[data-dir="asc"]::after { content: "\2191"; opacity: 1;
+                                                   color: var(--accent); }
+  table.sortable thead th[data-dir="desc"]::after { content: "\2193"; opacity: 1;
+                                                    color: var(--accent); }
+
+  .hint { font-family: "IBM Plex Mono", monospace; font-size: 0.68rem; color: var(--muted); }
+
+  /* ---------- cards ---------- */
+
+  .callout {
+    background: color-mix(in oklab, var(--accent) 8%, var(--surface));
+    border: 1px solid color-mix(in oklab, var(--accent) 30%, var(--line));
+    border-radius: 5px; padding: 1.2rem clamp(1rem, 3vw, 1.5rem);
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .callout strong { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800;
+                    font-size: 1.1rem; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+           gap: 1rem; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 3px solid var(--accent); border-radius: 4px;
+    padding: 1.05rem 1.15rem; display: flex; flex-direction: column; gap: 0.4rem;
+  }
+
+  .card p { font-size: 0.9rem; color: var(--ink-2); }
+
+  ul.plain { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column;
+             gap: 0.5rem; color: var(--ink-2); font-size: 0.92rem; max-width: 68ch; }
+  ul.plain::marker { color: var(--muted); }
+
+  footer { border-top: 1px solid var(--line); padding-top: 1.3rem; color: var(--muted);
+           font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; line-height: 1.7; }
+
+  footer a { color: var(--accent-ink); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .bar { animation: grow 650ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+    @keyframes grow { from { width: 0; } to { width: calc(var(--w) * 1%); } }
+  }
+</style>
+
+<div class="page">
+
+  <header>
+    <p class="eyebrow">Measured &middot; 21 August 2026</p>
+    <h1>Ten Languages,<br>One API</h1>
+    <hr class="rule">
+    <p class="big">Same API. Ten languages. Three sizes. Thirty builds. All thirty pass all
+      tests. Then count tokens. Then measure speed.</p>
+    <p class="big">Two big things. Token gap <strong>shrink</strong> when app grow. And fast
+      language cost <strong>more</strong> tokens, slow language cost less.</p>
+
+    <div class="stats">
+      <div class="stat"><b>30</b><span>builds</span></div>
+      <div class="stat"><b>259</b><span>tests each, all pass</span></div>
+      <div class="stat"><b>2.71&times;</b><span>token spread</span></div>
+      <div class="stat"><b>133&times;</b><span>speed spread</span></div>
+      <div class="stat"><b>60&times;</b><span>memory spread</span></div>
+    </div>
+  </header>
+
+  <section>
+    <h2>Three sizes</h2>
+    <p class="say">Small = plain CRUD, 7 routes. Mid = add auth, roles, logging, error codes,
+      paging, state machine. 16 routes. Large = add module split, ETag concurrency, idempotency
+      keys, soft delete, audit log, outbox, quota, bulk write, search, reports, metrics. 34
+      routes.</p>
+    <p class="say">Spec written first. Test written second. Code written last. Nothing counts
+      until server run and pass every test over real HTTP.</p>
+  </section>
+
+  <section>
+    <h2>Token gap shrink when app grow</h2>
+    <p class="say">Bar = cost versus cheapest language that tier. Three bars each: small, mid,
+      large. Expensive language get much cheaper when app get big.</p>
+
+    <div class="chart">
+      <div class="pair"><span class="lang">Python</span><span class="bars">
+        <span class="bar-row"><span class="tag">S</span><span class="track"><span class="bar s" style="--w:24.9"></span></span><span class="val">1.00&times;</span></span>
+        <span class="bar-row"><span class="tag">M</span><span class="track"><span class="bar m" style="--w:24.9"></span></span><span class="val">1.00&times;</span></span>
+        <span class="bar-row"><span class="tag">L</span><span class="track"><span class="bar l" style="--w:24.9"></span></span><span class="val">1.00&times;</span></span>
+      </span></div>
+      <div class="pair"><span class="lang">TypeScript</span><span class="bars">
+        <span class="bar-row"><span class="tag">S</span><span class="track"><span class="bar s" style="--w:31.9"></span></span><span class="val">1.28&times;</span></span>
+        <span class="bar-row"><span class="tag">M</span><span class="track"><span class="bar m" style="--w:28.2"></span></span><span class="val">1.13&times;</span></span>
+        <span class="bar-row"><span class="tag">L</span><span class="track"><span class="bar l" style="--w:27.9"></span></span><span class="val">1.12&times;</span></span>
+      </span></div>
+      <div class="pair"><span class="lang">C#</span><span class="bars">
+        <span class="bar-row"><span class="tag">S</span><span class="track"><span class="bar s" style="--w:27.9"></span></span><span class="val">1.12&times;</span></span>
+        <span class="bar-row"><span class="tag">M</span><span class="track"><span class="bar m" style="--w:26.9"></span></span><span class="val">1.08&times;</span></span>
+        <span class="bar-row"><span class="tag">L</span><span class="track"><span class="bar l" style="--w:28.7"></span></span><span class="val">1.15&times;</span></span>
+      </span></div>
+      <div class="pair"><span class="lang">Java</span><span class="bars">
+        <span class="bar-row"><span class="tag">S</span><span class="track"><span class="bar s" style="--w:37.7"></span></span><span class="val">1.51&times;</span></span>
+        <span class="bar-row"><span class="tag">M</span><span class="track"><span class="bar m" style="--w:33.7"></span></span><span class="val">1.35&times;</span></span>
+        <span class="bar-row"><span class="tag">L</span><span class="track"><span class="bar l" style="--w:34.4"></span></span><span class="val">1.38&times;</span></span>
+      </span></div>
+      <div class="pair"><span class="lang">PHP</span><span class="bars">
+        <span class="bar-row"><span class="tag">S</span><span class="track"><span class="bar s" style="--w:49.9"></span></span><span class="val">2.00&times;</span></span>
+        <span class="bar-row"><span class="tag">M</span><span class="track"><span class="bar m" style="--w:37.9"></span></span><span class="val">1.52&times;</span></span>
+        <span class="bar-row"><span class="tag">L</span><span class="track"><span class="bar l" style="--w:35.4"></span></span><span class="val">1.42&times;</span></span>
+      </span></div>
+      <div class="pair"><span class="lang">Go</span><span class="bars">
+        <span class="bar-row"><span class="tag">S</span><span class="track"><span class="bar s" style="--w:43.6"></span></span><span class="val">1.75&times;</span></span>
+        <span class="bar-row"><span class="tag">M</span><span class="track"><span class="bar m" style="--w:43.6"></span></span><span class="val">1.75&times;</span></span>
+        <span class="bar-row"><span class="tag">L</span><span class="track"><span class="bar l" style="--w:38.9"></span></span><span class="val">1.56&times;</span></span>
+      </span></div>
+      <div class="pair"><span class="lang">Rust</span><span class="bars">
+        <span class="bar-row"><span class="tag">S</span><span class="track"><span class="bar s" style="--w:41.4"></span></span><span class="val">1.66&times;</span></span>
+        <span class="bar-row"><span class="tag">M</span><span class="track"><span class="bar m" style="--w:42.9"></span></span><span class="val">1.72&times;</span></span>
+        <span class="bar-row"><span class="tag">L</span><span class="track"><span class="bar l" style="--w:41.4"></span></span><span class="val">1.66&times;</span></span>
+      </span></div>
+      <div class="pair"><span class="lang">Zig</span><span class="bars">
+        <span class="bar-row"><span class="tag">S</span><span class="track"><span class="bar s" style="--w:51.9"></span></span><span class="val">2.08&times;</span></span>
+        <span class="bar-row"><span class="tag">M</span><span class="track"><span class="bar m" style="--w:46.6"></span></span><span class="val">1.87&times;</span></span>
+        <span class="bar-row"><span class="tag">L</span><span class="track"><span class="bar l" style="--w:45.9"></span></span><span class="val">1.84&times;</span></span>
+      </span></div>
+      <div class="pair"><span class="lang">C++</span><span class="bars">
+        <span class="bar-row"><span class="tag">S</span><span class="track"><span class="bar s" style="--w:86.0"></span></span><span class="val">3.45&times;</span></span>
+        <span class="bar-row"><span class="tag">M</span><span class="track"><span class="bar m" style="--w:57.9"></span></span><span class="val">2.32&times;</span></span>
+        <span class="bar-row"><span class="tag">L</span><span class="track"><span class="bar l" style="--w:48.9"></span></span><span class="val">1.96&times;</span></span>
+      </span></div>
+      <div class="pair"><span class="lang">C</span><span class="bars">
+        <span class="bar-row"><span class="tag">S</span><span class="track"><span class="bar s" style="--w:100"></span></span><span class="val">4.01&times;</span></span>
+        <span class="bar-row"><span class="tag">M</span><span class="track"><span class="bar m" style="--w:79.3"></span></span><span class="val">3.18&times;</span></span>
+        <span class="bar-row"><span class="tag">L</span><span class="track"><span class="bar l" style="--w:67.6"></span></span><span class="val">2.71&times;</span></span>
+      </span></div>
+
+      <div class="legend">
+        <span><span class="swatch" style="background: color-mix(in oklab, var(--accent) 30%, var(--surface-2))"></span>small, 7 routes</span>
+        <span><span class="swatch" style="background: color-mix(in oklab, var(--accent) 60%, var(--surface-2))"></span>mid, 16 routes</span>
+        <span><span class="swatch" style="background: var(--accent)"></span>large, 34 routes</span>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Low-level penalty is fixed cost, not multiplier.</strong>
+      <p>C and C++ and Zig write HTTP parser, JSON parser, JSON writer, socket loop —
+        <em>one time</em>. Python and C# import all that. So Python start way ahead, then gain
+        nothing more. Every language pay same for route number 35.</p>
+      <p>Worst-to-best gap: <strong>4.01&times;</strong> at 7 routes &rarr;
+        <strong>3.18&times;</strong> at 16 &rarr; <strong>2.71&times;</strong> at 34.</p>
+      <p>So: measure on toy app, you punish C too hard. Old rule "C cost about 1.9&times;" is
+        near right on big app, very wrong on small app.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Token cost, all three sizes</h2>
+    <p class="hint">Click any header to sort.</p>
+    <div class="scroll">
+      <table class="sortable">
+        <thead>
+          <tr>
+            <th>Language</th>
+            <th class="num">small</th><th class="num">mid</th><th class="num">large</th>
+            <th class="num">large tokens</th><th class="num">large lines</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">Python</td><td class="num win">1.00&times;</td>
+            <td class="num win">1.00&times;</td><td class="num win">1.00&times;</td>
+            <td class="num" data-sort="10558">10,558</td>
+            <td class="num" data-sort="1321">1,321</td></tr>
+          <tr><td class="name">TypeScript</td><td class="num">1.28&times;</td>
+            <td class="num">1.13&times;</td><td class="num">1.12&times;</td>
+            <td class="num" data-sort="11874">11,874</td>
+            <td class="num" data-sort="1493">1,493</td></tr>
+          <tr><td class="name">C#</td><td class="num">1.12&times;</td>
+            <td class="num">1.08&times;</td><td class="num">1.15&times;</td>
+            <td class="num" data-sort="12180">12,180</td>
+            <td class="num" data-sort="1360">1,360</td></tr>
+          <tr><td class="name">Java</td><td class="num">1.51&times;</td>
+            <td class="num">1.35&times;</td><td class="num">1.38&times;</td>
+            <td class="num" data-sort="14521">14,521</td>
+            <td class="num" data-sort="1601">1,601</td></tr>
+          <tr><td class="name">PHP</td><td class="num">2.00&times;</td>
+            <td class="num">1.52&times;</td><td class="num">1.42&times;</td>
+            <td class="num" data-sort="15022">15,022</td>
+            <td class="num" data-sort="1661">1,661</td></tr>
+          <tr><td class="name">Go</td><td class="num">1.75&times;</td>
+            <td class="num">1.75&times;</td><td class="num">1.56&times;</td>
+            <td class="num" data-sort="16518">16,518</td>
+            <td class="num" data-sort="2338">2,338</td></tr>
+          <tr><td class="name">Rust</td><td class="num">1.66&times;</td>
+            <td class="num">1.72&times;</td><td class="num">1.66&times;</td>
+            <td class="num" data-sort="17560">17,560</td>
+            <td class="num" data-sort="2147">2,147</td></tr>
+          <tr><td class="name">Zig</td><td class="num">2.08&times;</td>
+            <td class="num">1.87&times;</td><td class="num">1.84&times;</td>
+            <td class="num" data-sort="19418">19,418</td>
+            <td class="num" data-sort="1995">1,995</td></tr>
+          <tr><td class="name">C++</td><td class="num">3.45&times;</td>
+            <td class="num">2.32&times;</td><td class="num">1.96&times;</td>
+            <td class="num" data-sort="20690">20,690</td>
+            <td class="num" data-sort="2408">2,408</td></tr>
+          <tr><td class="name">C</td><td class="num lose">4.01&times;</td>
+            <td class="num lose">3.18&times;</td><td class="num lose">2.71&times;</td>
+            <td class="num" data-sort="28583">28,583</td>
+            <td class="num" data-sort="3151">3,151</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Speed, CPU, memory</h2>
+    <p class="say">Big app. 10,000 requests, one at a time. p50 = middle request. Use p50, not
+      p99 — Windows timer tick make p99 lie.</p>
+    <p class="hint">Click any header to sort.</p>
+    <div class="scroll">
+      <table class="sortable">
+        <thead>
+          <tr>
+            <th>Language</th>
+            <th class="num">p50 ms</th><th class="num">req/s</th>
+            <th class="num">CPU ms/req</th><th class="num">idle RAM</th>
+            <th class="num">cold start</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">Zig</td><td class="num win" data-sort="0.226">0.226</td>
+            <td class="num win" data-sort="2684">2,684</td>
+            <td class="num win" data-sort="0.062">0.062</td>
+            <td class="num win" data-sort="3.3">3.3 MB</td>
+            <td class="num" data-sort="52">52 ms</td></tr>
+          <tr><td class="name">Rust</td><td class="num" data-sort="0.303">0.303</td>
+            <td class="num" data-sort="2044">2,044</td>
+            <td class="num" data-sort="0.122">0.122</td>
+            <td class="num" data-sort="6.2">6.2 MB</td>
+            <td class="num win" data-sort="40">40 ms</td></tr>
+          <tr><td class="name">Go</td><td class="num" data-sort="0.318">0.318</td>
+            <td class="num" data-sort="1964">1,964</td>
+            <td class="num" data-sort="0.256">0.256</td>
+            <td class="num" data-sort="8.5">8.5 MB</td>
+            <td class="num" data-sort="68">68 ms</td></tr>
+          <tr><td class="name">TypeScript</td><td class="num" data-sort="0.406">0.406</td>
+            <td class="num" data-sort="1541">1,541</td>
+            <td class="num" data-sort="0.323">0.323</td>
+            <td class="num" data-sort="66.7">66.7 MB</td>
+            <td class="num" data-sort="269">269 ms</td></tr>
+          <tr><td class="name">C#</td><td class="num" data-sort="0.435">0.435</td>
+            <td class="num" data-sort="1440">1,440</td>
+            <td class="num" data-sort="0.586">0.586</td>
+            <td class="num" data-sort="50.8">50.8 MB</td>
+            <td class="num" data-sort="448">448 ms</td></tr>
+          <tr><td class="name">Java</td><td class="num" data-sort="0.638">0.638</td>
+            <td class="num" data-sort="716">716</td>
+            <td class="num" data-sort="1.748">1.748</td>
+            <td class="num lose" data-sort="199.6">199.6 MB</td>
+            <td class="num lose" data-sort="5041">5,041 ms</td></tr>
+          <tr><td class="name">C++</td><td class="num" data-sort="0.688">0.688</td>
+            <td class="num" data-sort="213">213</td>
+            <td class="num" data-sort="0.172">0.172</td>
+            <td class="num" data-sort="5.2">5.2 MB</td>
+            <td class="num" data-sort="63">63 ms</td></tr>
+          <tr><td class="name">C</td><td class="num" data-sort="0.702">0.702</td>
+            <td class="num lose" data-sort="181">181</td>
+            <td class="num" data-sort="0.128">0.128</td>
+            <td class="num" data-sort="4.2">4.2 MB</td>
+            <td class="num" data-sort="50">50 ms</td></tr>
+          <tr><td class="name">Python</td><td class="num" data-sort="1.483">1.483</td>
+            <td class="num" data-sort="444">444</td>
+            <td class="num" data-sort="1.516">1.516</td>
+            <td class="num" data-sort="50.3">50.3 MB</td>
+            <td class="num" data-sort="690">690 ms</td></tr>
+          <tr><td class="name">PHP</td><td class="num lose" data-sort="30.069">30.069</td>
+            <td class="num lose" data-sort="31">31</td>
+            <td class="num lose" data-sort="18.677">18.677</td>
+            <td class="num" data-sort="34.1">34.1 MB</td>
+            <td class="num" data-sort="156">156 ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Token rank flip speed rank</h2>
+    <div class="callout">
+      <strong>Cheap tokens, slow code. Expensive tokens, fast code.</strong>
+      <p>Python win token, place 9 of 10 on speed. Zig place 8 on token, win every speed number.
+        Two lists almost mirror. So no single best language here — only trade you pick on
+        purpose.</p>
+      <p>TypeScript sit good on both: 2 on token, 4 on speed.</p>
+    </div>
+    <p class="hint">Click any header to sort.</p>
+    <div class="scroll">
+      <table class="sortable">
+        <thead>
+          <tr><th>Language</th><th class="num">token rank</th><th class="num">speed rank</th>
+            <th class="num">shift</th><th data-nosort>Caveman say</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">Zig</td><td class="num">8</td><td class="num">1</td>
+            <td class="num win">+7</td><td>fast, tiny, hard to write</td></tr>
+          <tr><td class="name">Rust</td><td class="num">7</td><td class="num">2</td>
+            <td class="num win">+5</td><td>fast, safe, many tokens</td></tr>
+          <tr><td class="name">Go</td><td class="num">6</td><td class="num">3</td>
+            <td class="num win">+3</td><td>fast, simple, very many lines</td></tr>
+          <tr><td class="name">C++</td><td class="num">9</td><td class="num">7</td>
+            <td class="num win">+2</td><td>tiny RAM, no keep-alive</td></tr>
+          <tr><td class="name">C</td><td class="num">10</td><td class="num">8</td>
+            <td class="num win">+2</td><td>tiny RAM, most tokens</td></tr>
+          <tr><td class="name">TypeScript</td><td class="num">2</td><td class="num">4</td>
+            <td class="num">&minus;2</td><td>good both, eat RAM</td></tr>
+          <tr><td class="name">C#</td><td class="num">3</td><td class="num">5</td>
+            <td class="num">&minus;2</td><td>dense code, mid speed</td></tr>
+          <tr><td class="name">Java</td><td class="num">4</td><td class="num">6</td>
+            <td class="num">&minus;2</td><td>JIT fast later, 5 s start</td></tr>
+          <tr><td class="name">PHP</td><td class="num">5</td><td class="num">10</td>
+            <td class="num lose">&minus;5</td><td>slow, get slower</td></tr>
+          <tr><td class="name">Python</td><td class="num">1</td><td class="num">9</td>
+            <td class="num lose">&minus;8</td><td>fewest tokens, slow</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">Shift = speed rank minus token rank. Plus means faster than token cost
+      suggest.</p>
+  </section>
+
+  <section>
+    <h2>Big findings</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>PHP only one get slower</h3>
+        <p>PHP make new process every request. Cannot hold memory. So rewrite whole store file
+          every request. Big app grow audit log, file hit 512 KB, PHP re-parse it every time.
+          p50 go 17.96 ms &rarr; 30.07 ms. Everyone else flat or better.</p>
+      </div>
+      <div class="card">
+        <h3>Java JIT worth 2.3&times;</h3>
+        <p>Java get faster while run: p50 1.452 &rarr; 0.638 ms. Only big improver. But pay
+          5,041 ms cold start and 199.6 MB RAM. Fine for long server. Bad for scale-to-zero.</p>
+      </div>
+      <div class="card">
+        <h3>C and C++ fast per request, slow per connection</h3>
+        <p>Both send <code>Connection: close</code>. New TCP handshake every request. p50 fine at
+          0.7 ms, but only 181 and 213 req/s versus Zig 2,684.</p>
+      </div>
+      <div class="card">
+        <h3>Zig win all speed number</h3>
+        <p>Best p50, best req/s, least CPU, least RAM at 3.3 MB. Standard library only, zero
+          dependency. Cost 1.84&times; Python token, and Zig 0.16 delete <code>std.net</code> so
+          almost no example exist.</p>
+      </div>
+      <div class="card">
+        <h3>C# dense, not bloated</h3>
+        <p>C# beat Python on line count at small and mid — 134 vs 138, 451 vs 472. Modern C# not
+          the old enterprise boilerplate.</p>
+      </div>
+      <div class="card">
+        <h3>Runtime spread beat token spread</h3>
+        <p>Token spread 2.71&times;. Speed spread 133&times;. RAM 60&times;. CPU 301&times;. Cold
+          start 126&times;. Source size flattest thing measured here.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Know this before you quote number</h2>
+    <ul class="plain">
+      <li><strong>Framework included.</strong> Real framework each language, not bare stdlib. So
+        this measure ecosystem too, not pure syntax. FastAPI hide work C must write by hand.</li>
+      <li><strong>Three things left out on purpose.</strong> No password hash, no signed token,
+        no timestamp in body. Keep work identical across ten languages. All three cheap in
+        Python, expensive in C — so leaving them out make C number <em>kinder</em>, not
+        harsher.</li>
+      <li><strong>Count read cost, not write cost.</strong> This count tokens to read working
+        code. Not count retries a compiler would catch. That is where strong types pay back.</li>
+      <li><strong>Tokenizer is proxy.</strong> tiktoken, not Claude tokenizer. Ratio hold across
+        two encoders. Absolute number will move.</li>
+      <li><strong>p99 lie on Windows.</strong> Tail land on 15.6 ms timer tick. p50 and p90
+        solid.</li>
+      <li><strong>One machine, one run, one request at a time.</strong> No concurrency test — four
+        builds single-thread by design, so concurrency test would rank thread model, not
+        language.</li>
+      <li><strong>Three sizes = three dots.</strong> Trend clear, curve shape not proven.</li>
+      <li><strong>C hit own ceiling.</strong> C use fixed arrays. At 10,000 requests on big app,
+        audit table full at 2,048 and 748 requests answer <code>409</code>. Real limit, and it
+        make C latency look slightly better than true.</li>
+    </ul>
+  </section>
+
+  <footer>
+    30 builds &middot; 259 tests each, all pass &middot; 90 runtime measurements &middot;
+    2 tokenizers<br>
+    CPython 3.13 &middot; Node + tsc 5 &middot; .NET 10 &middot; Go 1.26 &middot; PHP 8.5 &middot;
+    Temurin JDK 21 &middot; rustc stable &middot; Zig 0.16 &middot; gcc/g++ 16<br>
+    Long version with full method, every table and the divergence register:
+    <code>benchmark.html</code> and <code>METHODOLOGY.md</code>.
+  </footer>
+
+</div>
+
+<script>
+  // Sortable tables. No dependency, click or keyboard, numeric aware.
+  function sortKey(cell) {
+    if (cell.dataset.sort !== undefined) {
+      var explicit = parseFloat(cell.dataset.sort);
+      return isNaN(explicit) ? cell.dataset.sort : explicit;
+    }
+    var text = cell.textContent.trim();
+    var numeric = parseFloat(text.replace(/,/g, "").replace(/[^0-9.+-]/g, ""));
+    return isNaN(numeric) ? text.toLowerCase() : numeric;
+  }
+
+  document.querySelectorAll("table.sortable").forEach(function (table) {
+    var heads = Array.prototype.slice.call(table.querySelectorAll("thead th"));
+    heads.forEach(function (th, index) {
+      if (th.hasAttribute("data-nosort")) return;
+      th.tabIndex = 0;
+      th.setAttribute("role", "button");
+      th.setAttribute("aria-label", th.textContent.trim() + ", sort");
+
+      function run() {
+        var body = table.tBodies[0];
+        var rows = Array.prototype.slice.call(body.rows);
+        var ascending = th.dataset.dir !== "asc";
+        heads.forEach(function (other) {
+          if (other !== th) {
+            delete other.dataset.dir;
+            other.removeAttribute("aria-sort");
+          }
+        });
+        th.dataset.dir = ascending ? "asc" : "desc";
+        th.setAttribute("aria-sort", ascending ? "ascending" : "descending");
+        rows.sort(function (left, right) {
+          var a = sortKey(left.cells[index]);
+          var b = sortKey(right.cells[index]);
+          if (typeof a === "number" && typeof b === "number") {
+            return ascending ? a - b : b - a;
+          }
+          return ascending
+            ? String(a).localeCompare(String(b))
+            : String(b).localeCompare(String(a));
+        });
+        rows.forEach(function (row) { body.appendChild(row); });
+      }
+
+      th.addEventListener("click", run);
+      th.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          run();
+        }
+      });
+    });
+  });
+</script>

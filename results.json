@@ -1,0 +1,692 @@
+[
+  {
+    "tier": "small",
+    "language": "python",
+    "framework": "FastAPI",
+    "source": {
+      "files": 1,
+      "lines": 138,
+      "codeLines": 101,
+      "characters": 3833,
+      "bytes": 3835,
+      "tokens": 986,
+      "tokensCl100k": 982
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 2,
+      "codeLines": 2,
+      "characters": 29,
+      "bytes": 29,
+      "tokens": 14,
+      "tokensCl100k": 14
+    }
+  },
+  {
+    "tier": "small",
+    "language": "typescript",
+    "framework": "Express",
+    "source": {
+      "files": 1,
+      "lines": 152,
+      "codeLines": 130,
+      "characters": 4575,
+      "bytes": 4577,
+      "tokens": 1259,
+      "tokensCl100k": 1259
+    },
+    "manifest": {
+      "files": 2,
+      "lines": 28,
+      "codeLines": 28,
+      "characters": 521,
+      "bytes": 521,
+      "tokens": 177,
+      "tokensCl100k": 177
+    }
+  },
+  {
+    "tier": "small",
+    "language": "csharp",
+    "framework": "ASP.NET Minimal API",
+    "source": {
+      "files": 1,
+      "lines": 134,
+      "codeLines": 111,
+      "characters": 4316,
+      "bytes": 4318,
+      "tokens": 1100,
+      "tokensCl100k": 1082
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 10,
+      "codeLines": 8,
+      "characters": 269,
+      "bytes": 269,
+      "tokens": 67,
+      "tokensCl100k": 66
+    }
+  },
+  {
+    "tier": "small",
+    "language": "go",
+    "framework": "net/http",
+    "source": {
+      "files": 1,
+      "lines": 263,
+      "codeLines": 236,
+      "characters": 6154,
+      "bytes": 6156,
+      "tokens": 1722,
+      "tokensCl100k": 1672
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 3,
+      "codeLines": 2,
+      "characters": 28,
+      "bytes": 28,
+      "tokens": 10,
+      "tokensCl100k": 10
+    }
+  },
+  {
+    "tier": "small",
+    "language": "php",
+    "framework": "Slim",
+    "source": {
+      "files": 1,
+      "lines": 236,
+      "codeLines": 205,
+      "characters": 7285,
+      "bytes": 7287,
+      "tokens": 1974,
+      "tokensCl100k": 1953
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 11,
+      "codeLines": 11,
+      "characters": 176,
+      "bytes": 176,
+      "tokens": 71,
+      "tokensCl100k": 69
+    }
+  },
+  {
+    "tier": "small",
+    "language": "java",
+    "framework": "Spring Boot",
+    "source": {
+      "files": 1,
+      "lines": 172,
+      "codeLines": 150,
+      "characters": 7007,
+      "bytes": 7009,
+      "tokens": 1489,
+      "tokensCl100k": 1405
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 39,
+      "codeLines": 32,
+      "characters": 1026,
+      "bytes": 1026,
+      "tokens": 305,
+      "tokensCl100k": 293
+    }
+  },
+  {
+    "tier": "small",
+    "language": "rust",
+    "framework": "Axum",
+    "source": {
+      "files": 1,
+      "lines": 211,
+      "codeLines": 192,
+      "characters": 6415,
+      "bytes": 6417,
+      "tokens": 1637,
+      "tokensCl100k": 1631
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 10,
+      "codeLines": 9,
+      "characters": 236,
+      "bytes": 236,
+      "tokens": 80,
+      "tokensCl100k": 78
+    }
+  },
+  {
+    "tier": "small",
+    "language": "zig",
+    "framework": "std.http",
+    "source": {
+      "files": 1,
+      "lines": 211,
+      "codeLines": 186,
+      "characters": 7596,
+      "bytes": 7598,
+      "tokens": 2047,
+      "tokensCl100k": 2038
+    },
+    "manifest": {
+      "files": 0,
+      "lines": 0,
+      "codeLines": 0,
+      "characters": 0,
+      "bytes": 0,
+      "tokens": 0,
+      "tokensCl100k": 0
+    }
+  },
+  {
+    "tier": "small",
+    "language": "c",
+    "framework": "raw winsock",
+    "source": {
+      "files": 1,
+      "lines": 593,
+      "codeLines": 545,
+      "characters": 18403,
+      "bytes": 18405,
+      "tokens": 4981,
+      "tokensCl100k": 4962
+    },
+    "manifest": {
+      "files": 0,
+      "lines": 0,
+      "codeLines": 0,
+      "characters": 0,
+      "bytes": 0,
+      "tokens": 0,
+      "tokensCl100k": 0
+    }
+  },
+  {
+    "tier": "small",
+    "language": "cpp",
+    "framework": "raw winsock",
+    "source": {
+      "files": 1,
+      "lines": 456,
+      "codeLines": 412,
+      "characters": 16158,
+      "bytes": 16160,
+      "tokens": 4179,
+      "tokensCl100k": 4178
+    },
+    "manifest": {
+      "files": 0,
+      "lines": 0,
+      "codeLines": 0,
+      "characters": 0,
+      "bytes": 0,
+      "tokens": 0,
+      "tokensCl100k": 0
+    }
+  },
+  {
+    "tier": "mid",
+    "language": "python",
+    "framework": "FastAPI",
+    "source": {
+      "files": 1,
+      "lines": 472,
+      "codeLines": 369,
+      "characters": 15218,
+      "bytes": 15220,
+      "tokens": 3761,
+      "tokensCl100k": 3751
+    },
+    "manifest": {
+      "files": 0,
+      "lines": 0,
+      "codeLines": 0,
+      "characters": 0,
+      "bytes": 0,
+      "tokens": 0,
+      "tokensCl100k": 0
+    }
+  },
+  {
+    "tier": "mid",
+    "language": "typescript",
+    "framework": "Express",
+    "source": {
+      "files": 1,
+      "lines": 513,
+      "codeLines": 458,
+      "characters": 16362,
+      "bytes": 16364,
+      "tokens": 4250,
+      "tokensCl100k": 4216
+    },
+    "manifest": {
+      "files": 2,
+      "lines": 28,
+      "codeLines": 28,
+      "characters": 525,
+      "bytes": 525,
+      "tokens": 178,
+      "tokensCl100k": 179
+    }
+  },
+  {
+    "tier": "mid",
+    "language": "csharp",
+    "framework": "ASP.NET Minimal API",
+    "source": {
+      "files": 1,
+      "lines": 451,
+      "codeLines": 397,
+      "characters": 16599,
+      "bytes": 16601,
+      "tokens": 4054,
+      "tokensCl100k": 3963
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 10,
+      "codeLines": 8,
+      "characters": 269,
+      "bytes": 269,
+      "tokens": 67,
+      "tokensCl100k": 66
+    }
+  },
+  {
+    "tier": "mid",
+    "language": "go",
+    "framework": "net/http",
+    "source": {
+      "files": 1,
+      "lines": 946,
+      "codeLines": 877,
+      "characters": 23400,
+      "bytes": 23402,
+      "tokens": 6589,
+      "tokensCl100k": 6525
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 3,
+      "codeLines": 2,
+      "characters": 28,
+      "bytes": 28,
+      "tokens": 10,
+      "tokensCl100k": 10
+    }
+  },
+  {
+    "tier": "mid",
+    "language": "php",
+    "framework": "Slim",
+    "source": {
+      "files": 1,
+      "lines": 639,
+      "codeLines": 566,
+      "characters": 21339,
+      "bytes": 21341,
+      "tokens": 5722,
+      "tokensCl100k": 5677
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 11,
+      "codeLines": 11,
+      "characters": 180,
+      "bytes": 180,
+      "tokens": 72,
+      "tokensCl100k": 71
+    }
+  },
+  {
+    "tier": "mid",
+    "language": "java",
+    "framework": "Spring Boot",
+    "source": {
+      "files": 1,
+      "lines": 550,
+      "codeLines": 490,
+      "characters": 23652,
+      "bytes": 23654,
+      "tokens": 5094,
+      "tokensCl100k": 4842
+    },
+    "manifest": {
+      "files": 2,
+      "lines": 42,
+      "codeLines": 35,
+      "characters": 1094,
+      "bytes": 1094,
+      "tokens": 324,
+      "tokensCl100k": 312
+    }
+  },
+  {
+    "tier": "mid",
+    "language": "rust",
+    "framework": "Axum",
+    "source": {
+      "files": 1,
+      "lines": 833,
+      "codeLines": 778,
+      "characters": 25372,
+      "bytes": 25374,
+      "tokens": 6484,
+      "tokensCl100k": 6458
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 10,
+      "codeLines": 9,
+      "characters": 281,
+      "bytes": 281,
+      "tokens": 91,
+      "tokensCl100k": 88
+    }
+  },
+  {
+    "tier": "mid",
+    "language": "zig",
+    "framework": "std.http",
+    "source": {
+      "files": 1,
+      "lines": 692,
+      "codeLines": 636,
+      "characters": 26120,
+      "bytes": 26122,
+      "tokens": 7022,
+      "tokensCl100k": 6986
+    },
+    "manifest": {
+      "files": 0,
+      "lines": 0,
+      "codeLines": 0,
+      "characters": 0,
+      "bytes": 0,
+      "tokens": 0,
+      "tokensCl100k": 0
+    }
+  },
+  {
+    "tier": "mid",
+    "language": "c",
+    "framework": "raw winsock",
+    "source": {
+      "files": 1,
+      "lines": 1532,
+      "codeLines": 1407,
+      "characters": 47961,
+      "bytes": 47963,
+      "tokens": 12909,
+      "tokensCl100k": 12832
+    },
+    "manifest": {
+      "files": 0,
+      "lines": 0,
+      "codeLines": 0,
+      "characters": 0,
+      "bytes": 0,
+      "tokens": 0,
+      "tokensCl100k": 0
+    }
+  },
+  {
+    "tier": "mid",
+    "language": "cpp",
+    "framework": "raw winsock",
+    "source": {
+      "files": 1,
+      "lines": 1044,
+      "codeLines": 947,
+      "characters": 37391,
+      "bytes": 37393,
+      "tokens": 9385,
+      "tokensCl100k": 9341
+    },
+    "manifest": {
+      "files": 0,
+      "lines": 0,
+      "codeLines": 0,
+      "characters": 0,
+      "bytes": 0,
+      "tokens": 0,
+      "tokensCl100k": 0
+    }
+  },
+  {
+    "tier": "large",
+    "language": "python",
+    "framework": "FastAPI",
+    "source": {
+      "files": 4,
+      "lines": 1321,
+      "codeLines": 976,
+      "characters": 44791,
+      "bytes": 44799,
+      "tokens": 10558,
+      "tokensCl100k": 10524
+    },
+    "manifest": {
+      "files": 0,
+      "lines": 0,
+      "codeLines": 0,
+      "characters": 0,
+      "bytes": 0,
+      "tokens": 0,
+      "tokensCl100k": 0
+    }
+  },
+  {
+    "tier": "large",
+    "language": "typescript",
+    "framework": "Express",
+    "source": {
+      "files": 4,
+      "lines": 1493,
+      "codeLines": 1296,
+      "characters": 47782,
+      "bytes": 47790,
+      "tokens": 11874,
+      "tokensCl100k": 11798
+    },
+    "manifest": {
+      "files": 2,
+      "lines": 29,
+      "codeLines": 29,
+      "characters": 551,
+      "bytes": 551,
+      "tokens": 187,
+      "tokensCl100k": 187
+    }
+  },
+  {
+    "tier": "large",
+    "language": "csharp",
+    "framework": "ASP.NET Minimal API",
+    "source": {
+      "files": 4,
+      "lines": 1360,
+      "codeLines": 1156,
+      "characters": 53574,
+      "bytes": 53582,
+      "tokens": 12180,
+      "tokensCl100k": 12016
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 10,
+      "codeLines": 8,
+      "characters": 269,
+      "bytes": 269,
+      "tokens": 67,
+      "tokensCl100k": 66
+    }
+  },
+  {
+    "tier": "large",
+    "language": "go",
+    "framework": "net/http",
+    "source": {
+      "files": 4,
+      "lines": 2338,
+      "codeLines": 2099,
+      "characters": 60217,
+      "bytes": 60225,
+      "tokens": 16518,
+      "tokensCl100k": 16456
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 3,
+      "codeLines": 2,
+      "characters": 28,
+      "bytes": 28,
+      "tokens": 10,
+      "tokensCl100k": 10
+    }
+  },
+  {
+    "tier": "large",
+    "language": "php",
+    "framework": "Slim",
+    "source": {
+      "files": 4,
+      "lines": 1661,
+      "codeLines": 1435,
+      "characters": 56921,
+      "bytes": 56929,
+      "tokens": 15022,
+      "tokensCl100k": 14958
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 11,
+      "codeLines": 11,
+      "characters": 182,
+      "bytes": 182,
+      "tokens": 72,
+      "tokensCl100k": 70
+    }
+  },
+  {
+    "tier": "large",
+    "language": "java",
+    "framework": "Spring Boot",
+    "source": {
+      "files": 4,
+      "lines": 1601,
+      "codeLines": 1394,
+      "characters": 69174,
+      "bytes": 69182,
+      "tokens": 14521,
+      "tokensCl100k": 13977
+    },
+    "manifest": {
+      "files": 2,
+      "lines": 42,
+      "codeLines": 35,
+      "characters": 1094,
+      "bytes": 1094,
+      "tokens": 324,
+      "tokensCl100k": 312
+    }
+  },
+  {
+    "tier": "large",
+    "language": "rust",
+    "framework": "Axum",
+    "source": {
+      "files": 4,
+      "lines": 2147,
+      "codeLines": 1951,
+      "characters": 69348,
+      "bytes": 69356,
+      "tokens": 17560,
+      "tokensCl100k": 17534
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 10,
+      "codeLines": 9,
+      "characters": 281,
+      "bytes": 281,
+      "tokens": 91,
+      "tokensCl100k": 88
+    }
+  },
+  {
+    "tier": "large",
+    "language": "zig",
+    "framework": "std.http",
+    "source": {
+      "files": 4,
+      "lines": 1995,
+      "codeLines": 1787,
+      "characters": 74498,
+      "bytes": 74506,
+      "tokens": 19418,
+      "tokensCl100k": 19330
+    },
+    "manifest": {
+      "files": 0,
+      "lines": 0,
+      "codeLines": 0,
+      "characters": 0,
+      "bytes": 0,
+      "tokens": 0,
+      "tokensCl100k": 0
+    }
+  },
+  {
+    "tier": "large",
+    "language": "c",
+    "framework": "raw winsock",
+    "source": {
+      "files": 7,
+      "lines": 3245,
+      "codeLines": 2892,
+      "characters": 109025,
+      "bytes": 109039,
+      "tokens": 29532,
+      "tokensCl100k": 29321
+    },
+    "manifest": {
+      "files": 0,
+      "lines": 0,
+      "codeLines": 0,
+      "characters": 0,
+      "bytes": 0,
+      "tokens": 0,
+      "tokensCl100k": 0
+    }
+  },
+  {
+    "tier": "large",
+    "language": "cpp",
+    "framework": "raw winsock",
+    "source": {
+      "files": 7,
+      "lines": 2467,
+      "codeLines": 2185,
+      "characters": 85800,
+      "bytes": 85814,
+      "tokens": 21254,
+      "tokensCl100k": 21155
+    },
+    "manifest": {
+      "files": 0,
+      "lines": 0,
+      "codeLines": 0,
+      "characters": 0,
+      "bytes": 0,
+      "tokens": 0,
+      "tokensCl100k": 0
+    }
+  }
+]

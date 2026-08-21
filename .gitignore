@@ -1,0 +1,34 @@
+# Dependency trees — restored by npm install / cargo build / composer install / mvn
+node_modules/
+vendor/
+target/
+.zig-cache/
+zig-out/
+
+# Build output
+dist/
+bin/
+obj/
+build/
+__pycache__/
+*.pyc
+
+# Compiled binaries and debug symbols
+*.exe
+*.pdb
+*.obj
+*.o
+*.ilk
+*.exp
+*.lib
+
+# PHP has no cross-request memory, so its store is a file on disk. It is runtime
+# state, recreated on every run, and must never be committed — a stale one makes
+# the conformance suite fail on its first case.
+store.json
+
+# Editor and OS noise
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

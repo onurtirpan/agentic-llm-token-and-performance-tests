@@ -1,0 +1,10 @@
+# Keep LF everywhere, in the repository and in the working tree.
+#
+# This is not cosmetic. Character and byte counts are part of the measurement,
+# and a CRLF checkout would add one byte per line to every implementation —
+# roughly 3,200 bytes to the large-tier C source alone — which would silently
+# change the published numbers depending on the platform someone cloned from.
+* text=auto eol=lf
+
+# Generated data files: keep them diffable but do not let anyone reformat them.
+*.json text eol=lf

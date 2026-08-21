@@ -225,6 +225,55 @@ are published but should be read as a property of the measurement host, not of
 the language. A dedicated tail-latency study would need a real load generator, a
 tuned timer resolution, and process pinning; none of that is done here.
 
+### Measured run-to-run variance, and what it disqualifies
+
+A discrepancy in the data prompted a direct check: PHP's mid-tier p50 came out as
+6.29 ms in one run and 13.03 ms in another, on identical code. Three repeat runs
+of three languages at 1000 requests, all three tiers:
+
+| Language | tier | run 1 | run 2 | run 3 | p50 spread | req/s spread |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| PHP | small | 12.680 | 13.901 | 12.035 | 15% | 68–70 |
+| PHP | mid | 6.206 | 12.083 | 11.573 | **95%** | 68–72 |
+| PHP | large | 11.425 | 15.356 | 12.054 | 35% | 51–59 |
+| Go | small | 0.332 | 0.295 | 0.295 | 13% | **580–1145** |
+| Go | mid | 0.300 | 0.302 | 0.315 | 5% | 926–1144 |
+| Go | large | 0.321 | 0.377 | 0.312 | 21% | **586–1095** |
+| Zig | small | 0.218 | 0.212 | 0.235 | 11% | 1864–2291 |
+| Zig | mid | 0.244 | 0.247 | 0.238 | 4% | 1854–2405 |
+| Zig | large | 0.270 | 0.276 | 0.267 | 3% | 1766–2124 |
+
+The pattern is inverted between fast and slow implementations, and the mechanism
+explains both halves:
+
+- **For a sub-millisecond server, throughput is unreliable.** `req/s` is derived
+  from the mean, and one 15.6 ms timer stall costs as much wall clock as roughly
+  fifty normal requests. The number of stalls in a run varies, so Go's throughput
+  swings by a factor of two while its p50 barely moves.
+- **For PHP, p50 is unreliable and throughput is stable.** At roughly 12 ms per
+  request a stall is worth about one request, so the mean is smooth. But PHP's
+  per-request cost is dominated by file I/O and framework construction, both of
+  which are bimodal depending on page-cache state, so the median jumps.
+
+**Consequences for how this benchmark should be read:**
+
+1. **Rank on p50.** It is the most stable figure for nine of ten implementations,
+   and for PHP the reported figure is confirmed to sit inside a wide band.
+2. **Treat every `req/s` figure for a sub-millisecond implementation as
+   indicative only, with roughly a factor of two of uncertainty.** The ordering
+   among C, C++, Zig, Go and Rust on throughput is *not* established by this
+   data. Their p50 ordering is.
+3. **PHP's p50 should be read as a band, not a point.** The published large-tier
+   figure of 31.57 ms sits above the 11.4–15.4 ms band measured at 1000
+   requests, because the large-tier store grows during a 10000-request run; the
+   direction is real, the exact value is not reproducible.
+
+Fixing this properly needs repeated runs with medians, a dedicated load
+generator, and a host with a tuned timer. That is a larger study than this one,
+and pretending otherwise would be worse than saying so.
+
+Raw repeat-run data is in `perf-variance/`.
+
 The harness records `probeFloorMs` on every run — the time it takes to detect a
 server that is already listening — so a reader can see the floor under the
 cold-start figures rather than having to infer it.
@@ -396,6 +445,15 @@ the token count slightly or because a language forced the choice.
     This is a real ceiling the other nine implementations do not have.
 15. **Duplicate keys in one JSON object.** Python keeps the last occurrence; the
     hand-written C and C++ scanners return the first. Unspecified and untested.
+15a. **Keep-alive details in C and C++.** Both cap requests per connection at
+    1000 and set `SO_RCVTIMEO` to 5000 ms, so one idle client cannot block a
+    single-threaded accept loop. C also sets `TCP_NODELAY`, because it writes the
+    header and body as two `send` calls and Nagle would otherwise stall the
+    second on a persistent connection. Both carry the keep-alive decision in a
+    per-connection flag rather than re-parsing, because the request line is
+    modified in place during dispatch. Neither implements HTTP pipelining
+    ordering guarantees beyond serving buffered requests in arrival order,
+    which is sufficient for a sequential client.
 16. **Header timing forced three different mechanisms.** FastAPI can set response
     headers after the handler returns. ASP.NET needs a `Response.OnStarting`
     callback, and Spring needs a `ThreadLocal<HttpServletResponse>` written

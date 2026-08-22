@@ -116,6 +116,29 @@
   },
   {
     "tier": "small",
+    "language": "php-bare",
+    "framework": "no framework",
+    "source": {
+      "files": 1,
+      "lines": 247,
+      "codeLines": 219,
+      "characters": 7166,
+      "bytes": 7168,
+      "tokens": 1911,
+      "tokensCl100k": 1895
+    },
+    "manifest": {
+      "files": 0,
+      "lines": 0,
+      "codeLines": 0,
+      "characters": 0,
+      "bytes": 0,
+      "tokens": 0,
+      "tokensCl100k": 0
+    }
+  },
+  {
+    "tier": "small",
     "language": "java",
     "framework": "Spring Boot",
     "source": {
@@ -346,6 +369,29 @@
   },
   {
     "tier": "mid",
+    "language": "php-bare",
+    "framework": "no framework",
+    "source": {
+      "files": 1,
+      "lines": 625,
+      "codeLines": 555,
+      "characters": 20450,
+      "bytes": 20452,
+      "tokens": 5464,
+      "tokensCl100k": 5433
+    },
+    "manifest": {
+      "files": 0,
+      "lines": 0,
+      "codeLines": 0,
+      "characters": 0,
+      "bytes": 0,
+      "tokens": 0,
+      "tokensCl100k": 0
+    }
+  },
+  {
+    "tier": "mid",
     "language": "java",
     "framework": "Spring Boot",
     "source": {
@@ -572,6 +618,29 @@
       "bytes": 182,
       "tokens": 72,
       "tokensCl100k": 70
+    }
+  },
+  {
+    "tier": "large",
+    "language": "php-bare",
+    "framework": "no framework",
+    "source": {
+      "files": 4,
+      "lines": 1657,
+      "codeLines": 1418,
+      "characters": 53607,
+      "bytes": 53615,
+      "tokens": 14391,
+      "tokensCl100k": 14349
+    },
+    "manifest": {
+      "files": 0,
+      "lines": 0,
+      "codeLines": 0,
+      "characters": 0,
+      "bytes": 0,
+      "tokens": 0,
+      "tokensCl100k": 0
     }
   },
   {

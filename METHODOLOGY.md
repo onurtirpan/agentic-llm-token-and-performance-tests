@@ -334,6 +334,41 @@ property of C or C++. All six C and C++ implementations were changed to honour
 the client's `Connection` header, reuse the socket, and carry a receive timeout
 so a single idle client cannot block a single-threaded accept loop.
 
+### PHP is measured twice, with and without a framework
+
+The layered probe above exposed an asymmetry in the rule "each language uses the
+framework a real team would pick".
+
+For Go, Rust, C# or Java, the framework is the **floor**. `net/http`, Axum,
+Minimal API and Spring are the least you can use and still serve HTTP, and they
+are constructed once at process start and reused for the life of the process.
+
+For PHP, a framework is a **choice**, and a costly one. PHP is a request handler
+by design: a single front controller dispatching on `$_SERVER['REQUEST_URI']` is
+ordinary, idiomatic PHP, used widely in production. And because PHP rebuilds the
+world on every request, Slim's container, router and middleware stack cost
+**4.24 ms per request, every request** — a cost the other nine pay once at
+start-up or not at all.
+
+Measuring only Slim-PHP therefore charges PHP for a decision many PHP developers
+do not make, and reports it as if it were a property of the language. So PHP is
+implemented and measured **twice at every tier**:
+
+| Variant | Directory | Dependencies |
+| --- | --- | --- |
+| `php` | `impl*/php/` | Slim 4 plus slim/psr7, via composer |
+| `php-bare` | `impl*/php-bare/` | none at all — no composer, no vendor, no autoloader |
+
+Both pass the identical conformance suites. Both keep the same file-backed
+`Store`, because PHP's inability to hold state between requests is a genuine
+property of the execution model and is not the thing under test here. Only the
+HTTP layer differs: `php-bare` matches routes itself and writes its own status
+codes and headers.
+
+This makes PHP the one language in the benchmark measured both ways, which is
+useful beyond PHP: it is a direct measurement of what a framework costs in tokens
+and in latency, holding the language and the logic constant.
+
 ### What was checked and left alone
 
 Everything else was reviewed for a comparable handicap and found fair: all ten

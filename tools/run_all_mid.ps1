@@ -56,6 +56,9 @@ Invoke-Case -Name "go" -Exe ".\impl-mid\go\taskservice.exe" -WaitSeconds 2
 Invoke-Case -Name "php" -Exe "php" `
     -Arguments @("-S", "127.0.0.1:8080", "-t", "impl-mid\php\public", "impl-mid\php\public\index.php") `
     -Before { Remove-Item "impl-mid\php\store.json" -ErrorAction SilentlyContinue }
+Invoke-Case -Name "php-bare" -Exe "php" `
+    -Arguments @("-S", "127.0.0.1:8080", "-t", "impl-mid\php-bare\public", "impl-mid\php-bare\public\index.php") `
+    -Before { Remove-Item "impl-mid\php-bare\store.json" -ErrorAction SilentlyContinue }
 Invoke-Case -Name "java" -Exe "$jdk\bin\java.exe" `
     -Arguments @("-jar", "impl-mid\java\target\taskservice-0.1.0.jar") -WaitSeconds 14
 Invoke-Case -Name "rust" -Exe ".\impl-mid\rust\target\release\taskservice.exe" -WaitSeconds 2

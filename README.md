@@ -1,5 +1,8 @@
 # agentic-llm-token-and-performance-tests
 
+**Read the results:
+[onurtirpan.github.io/agentic-llm-token-and-performance-tests](https://onurtirpan.github.io/agentic-llm-token-and-performance-tests/)**
+
 ## Ten Languages, One API
 
 **How many tokens does it cost to express the same backend service in each
@@ -24,9 +27,16 @@ Two results stand out:
    writes the fewest tokens and places 9th of 10 on latency. C and C++ cost the
    most tokens and place 1st and 2nd.
 
-Results pages: [`docs/benchmark.html`](docs/benchmark.html) (short) and
-[`docs/benchmark-detailed.html`](docs/benchmark-detailed.html) (full). Both are
-single self-contained files.
+Results pages, live on GitHub Pages:
+
+- [short version](https://onurtirpan.github.io/agentic-llm-token-and-performance-tests/benchmark.html)
+  — the headline tables and charts, sortable
+- [full version](https://onurtirpan.github.io/agentic-llm-token-and-performance-tests/benchmark-detailed.html)
+  — every table, every tier, and every mistake we found and fixed
+
+The sources are [`docs/benchmark.html`](docs/benchmark.html) and
+[`docs/benchmark-detailed.html`](docs/benchmark-detailed.html). Each is a single
+self-contained file, so either one opens correctly straight from disk.
 
 ## The three tiers
 

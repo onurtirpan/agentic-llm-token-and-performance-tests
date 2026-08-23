@@ -81,6 +81,9 @@
          grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 0.35rem 1.2rem; }
   .toc a { color: var(--accent-ink); text-decoration: none; font-size: 0.88rem; }
   .toc a:hover { text-decoration: underline; }
+  .eyebrow a { color: var(--accent-ink); text-decoration: none;
+               border-bottom: 1px solid color-mix(in oklab, var(--accent) 40%, transparent); }
+  .eyebrow a:hover { border-bottom-color: var(--accent); }
 
   .chart { display: flex; flex-direction: column; gap: 0.85rem; background: var(--surface);
            border: 1px solid var(--line); border-radius: 5px;
@@ -184,7 +187,8 @@
 <div class="page">
 
   <header>
-    <p class="eyebrow">Measured &middot; 21&ndash;23 August 2026 &middot; detailed version</p>
+    <p class="eyebrow">Measured &middot; 21&ndash;23 August 2026 &middot; detailed version &middot;
+      <a href="benchmark-tr.html">Türkçe (kısa sürüm)</a></p>
     <h1>Ten Languages,<br>One API</h1>
     <hr class="rule">
     <p class="big">Same API. Ten languages. Three sizes. Thirty builds. All pass all tests. Then

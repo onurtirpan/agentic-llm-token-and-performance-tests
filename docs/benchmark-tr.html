@@ -1,4 +1,6 @@
-<title>Ten Languages, One API</title>
+<html lang="tr">
+<meta charset="utf-8">
+<title>On Dil, Tek API</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap">
@@ -172,39 +174,40 @@
 <div class="page">
 
   <header>
-    <p class="eyebrow">Measured &middot; 21&ndash;23 August 2026 &middot;
-      <a href="benchmark-tr.html">Türkçe</a></p>
-    <h1>Ten Languages,<br>One API</h1>
+    <p class="eyebrow">Ölçüm &middot; 21&ndash;23 Ağustos 2026 &middot; <a href="benchmark.html">English</a></p>
+    <h1>On Dil,<br>Tek API</h1>
     <hr class="rule">
-    <p class="big">Same API. Ten languages. Three sizes. Thirty builds. All pass all tests. Then
-      count tokens. Then measure speed, CPU, RAM.</p>
-    <p class="big">Two big things. Token gap <strong>shrink</strong> when app grow. And token
-      order is almost <strong>exact reverse</strong> of speed order.</p>
+    <p class="big">Aynı API. On dil. Üç ölçek. Otuz uygulama. Hepsi bütün testleri geçti. Sonra
+      tokenleri saydık. Sonra hızı, CPU'yu ve RAM'i ölçtük.</p>
+    <p class="big">İki önemli sonuç. Uygulama büyüdükçe token farkı <strong>daralıyor</strong>. Ve
+      token sıralaması, hız sıralamasının <strong>neredeyse tam tersi</strong>.</p>
 
     <div class="stats">
-      <div class="stat"><b>30</b><span>builds</span></div>
-      <div class="stat"><b>259</b><span>tests each, all pass</span></div>
-      <div class="stat"><b>2.80&times;</b><span>token spread</span></div>
-      <div class="stat"><b>40&times;</b><span>speed spread</span></div>
-      <div class="stat"><b>57&times;</b><span>memory spread</span></div>
+      <div class="stat"><b>30</b><span>uygulama</span></div>
+      <div class="stat"><b>259</b><span>test, hepsi geçti</span></div>
+      <div class="stat"><b>2.80&times;</b><span>token farkı</span></div>
+      <div class="stat"><b>40&times;</b><span>hız farkı</span></div>
+      <div class="stat"><b>57&times;</b><span>bellek farkı</span></div>
     </div>
   </header>
 
   <section>
-    <h2>Three sizes</h2>
-    <p class="say">Small = plain CRUD, 7 routes. Mid = add auth, roles, row access, middleware,
-      logging, error codes, paging, sorting, state machine, cascade delete. 16 routes. Large =
-      add module split, ETag concurrency, idempotency keys, soft delete, audit log, outbox,
-      quota, bulk write, search, reports, metrics, comments, user admin. 34 routes.</p>
-    <p class="say">Spec written first. Test written second. Code written last. Nothing count
-      until real server run and pass every test over real HTTP. Mid and large also must pass
-      log check that read server stdout and check every log line.</p>
+    <h2>Üç ölçek</h2>
+    <p class="say">Küçük = sade CRUD, 7 rota. Orta = kimlik doğrulama, roller, satır bazlı
+      erişim, ara katman, yapılandırılmış günlük, hata kodları, sayfalama, sıralama, durum
+      makinesi ve kademeli silme eklenir. 16 rota. Büyük = modül ayrımı, ETag eşzamanlılığı,
+      idempotanlık anahtarları, mantıksal silme, denetim kaydı, giden kutusu, kota, toplu yazma,
+      arama, raporlar, metrikler, yorumlar ve kullanıcı yönetimi eklenir. 34 rota.</p>
+    <p class="say">İlk önce şartname yazıldı. Sonra testler. Kod en son yazıldı. Gerçek bir sunucu
+      çalışıp gerçek HTTP üzerinden bütün testleri geçmeden hiçbir ölçüm sayılmadı. Orta ve büyük
+      ölçek ayrıca günlük denetimini de geçmek zorunda: bu denetim sunucunun stdout çıktısını
+      okur ve her günlük satırını doğrular.</p>
   </section>
 
   <section>
-    <h2>Token gap shrink when app grow</h2>
-    <p class="say">Bar = cost versus cheapest language that tier. Three bars each: small, mid,
-      large. Expensive language get much cheaper when app get big.</p>
+    <h2>Uygulama büyüdükçe token farkı daralıyor</h2>
+    <p class="say">Çubuk = o ölçekteki en ucuz dile göre maliyet. Her dil için üç çubuk: küçük,
+      orta, büyük. Pahalı diller uygulama büyüdükçe belirgin biçimde ucuzluyor.</p>
 
     <div class="chart">
       <div class="pair"><span class="lang">Python</span><span class="bars">
@@ -259,32 +262,33 @@
       </span></div>
 
       <div class="legend">
-        <span><span class="swatch" style="background: color-mix(in oklab, var(--accent) 30%, var(--surface-2))"></span>small, 7 routes</span>
-        <span><span class="swatch" style="background: color-mix(in oklab, var(--accent) 60%, var(--surface-2))"></span>mid, 16 routes</span>
-        <span><span class="swatch" style="background: var(--accent)"></span>large, 34 routes</span>
+        <span><span class="swatch" style="background: color-mix(in oklab, var(--accent) 30%, var(--surface-2))"></span>küçük, 7 rota</span>
+        <span><span class="swatch" style="background: color-mix(in oklab, var(--accent) 60%, var(--surface-2))"></span>orta, 16 rota</span>
+        <span><span class="swatch" style="background: var(--accent)"></span>büyük, 34 rota</span>
       </div>
     </div>
 
     <div class="callout">
-      <strong>Low-level penalty is fixed cost, not multiplier.</strong>
-      <p>C and C++ and Zig write HTTP parser, JSON parser, JSON writer, socket loop —
-        <em>one time</em>. Python and C# import all that. So Python start way ahead, then gain
-        nothing more. Every language pay same for route number 35.</p>
-      <p>Gap worst-to-best: <strong>5.05&times;</strong> at 7 routes &rarr;
-        <strong>3.43&times;</strong> at 16 &rarr; <strong>2.80&times;</strong> at 34.</p>
-      <p>So: measure on toy app, you punish C too hard — by near double.</p>
+      <strong>Alt seviye dillerin cezası sabit bir maliyet, çarpan değil.</strong>
+      <p>C, C++ ve Zig; HTTP ayrıştırıcısını, JSON ayrıştırıcısını, JSON yazıcısını ve soket
+        döngüsünü <em>bir kez</em> yazar. Python ve C# bunların tamamını hazır alır. Yani Python
+        çok önde başlar, sonra ek bir kazanç elde etmez. 35. rotanın maliyeti her dilde aynıdır.</p>
+      <p>En kötü ile en iyi arasındaki fark: 7 rotada <strong>5.05&times;</strong> &rarr;
+        16 rotada <strong>3.43&times;</strong> &rarr; 34 rotada <strong>2.80&times;</strong>.</p>
+      <p>Sonuç: oyuncak bir uygulamada ölçüm yaparsanız C'yi fazla cezalandırırsınız &mdash;
+        neredeyse iki kat.</p>
     </div>
   </section>
 
   <section>
-    <h2>Token cost</h2>
-    <p class="hint">Click any header to sort.</p>
+    <h2>Token maliyeti</h2>
+    <p class="hint">Sıralamak için herhangi bir başlığa tıklayın.</p>
     <div class="scroll">
       <table class="sortable">
         <thead>
-          <tr><th>Language</th><th class="num">small</th><th class="num">mid</th>
-            <th class="num">large</th><th class="num">large tokens</th>
-            <th class="num">large lines</th></tr>
+          <tr><th>Dil</th><th class="num">küçük</th><th class="num">orta</th>
+            <th class="num">büyük</th><th class="num">büyük token</th>
+            <th class="num">büyük satır</th></tr>
         </thead>
         <tbody>
           <tr><td class="name">Python</td><td class="num win">1.00&times;</td>
@@ -323,17 +327,19 @@
   </section>
 
   <section>
-    <h2>Speed, CPU, memory</h2>
-    <p class="say">Big app. 10,000 requests, one at a time. p50 = middle request. Use p50, not
-      p99 — Windows timer tick make p99 lie. Cold start have harness floor removed.</p>
-    <p class="hint">Click any header to sort. Rank on p50 — req/s is noisy for sub-millisecond
-      build. Detail in <code>METHODOLOGY.md</code>.</p>
+    <h2>Hız, CPU, bellek</h2>
+    <p class="say">Büyük uygulama. 10,000 istek, teker teker. p50 = ortadaki istek. p99 değil
+      p50 kullanın: Windows zamanlayıcı adımı p99'u yanıltıyor. Soğuk başlangıçtan ölçüm aracının
+      kendi tabanı çıkarıldı.</p>
+    <p class="hint">Sıralamak için herhangi bir başlığa tıklayın. Sıralamayı p50 üzerinden yapın:
+      milisaniyenin altındaki uygulamalar için req/s gürültülüdür. Ayrıntı:
+      <code>METHODOLOGY.md</code>.</p>
     <div class="scroll">
       <table class="sortable">
         <thead>
-          <tr><th>Language</th><th class="num">p50 ms</th><th class="num">req/s</th>
-            <th class="num">CPU ms/req</th><th class="num">idle RAM</th>
-            <th class="num">cold start</th></tr>
+          <tr><th>Dil</th><th class="num">p50 ms</th><th class="num">req/s</th>
+            <th class="num">CPU ms/istek</th><th class="num">boşta RAM</th>
+            <th class="num">soğuk başlangıç</th></tr>
         </thead>
         <tbody>
           <tr><td class="name">C++</td><td class="num win" data-sort="0.218">0.218</td>
@@ -392,262 +398,283 @@
   </section>
 
   <section>
-    <h2>Token order is reverse of speed order</h2>
+    <h2>Token sıralaması, hız sıralamasının tersi</h2>
     <div class="callout">
-      <strong>Cheap tokens, slow code. Expensive tokens, fast code.</strong>
-      <p>C and C++ cost most tokens — and win speed. Python cost fewest tokens — and place 9 of
-        10 on speed. Two lists near mirror image.</p>
-      <p>So no single best language here. Only trade you pick on purpose. Nothing sit good on
-        both end.</p>
+      <strong>Ucuz token, yavaş kod. Pahalı token, hızlı kod.</strong>
+      <p>C ve C++ en çok tokeni harcıyor &mdash; ve hızda birinci ile ikinci oluyor. Python en az
+        tokeni harcıyor &mdash; ve hızda 10 dil içinde 9. sırada. İki liste neredeyse birbirinin
+        aynası.</p>
+      <p>Yani burada tek bir &ldquo;en iyi dil&rdquo; yok. Sadece bilerek seçtiğiniz bir denge
+        var. Hiçbir dil iki uçta da iyi değil.</p>
     </div>
-    <p class="hint">Click any header to sort.</p>
+    <p class="hint">Sıralamak için herhangi bir başlığa tıklayın.</p>
     <div class="scroll">
       <table class="sortable">
         <thead>
-          <tr><th>Language</th><th class="num">token rank</th><th class="num">speed rank</th>
-            <th class="num">shift</th><th data-nosort>Caveman say</th></tr>
+          <tr><th>Dil</th><th class="num">token sırası</th><th class="num">hız sırası</th>
+            <th class="num">kayma</th><th data-nosort>Kısa yorum</th></tr>
         </thead>
         <tbody>
           <tr><td class="name">C++</td><td class="num">9</td><td class="num">1</td>
-            <td class="num win">+8</td><td>fastest, most token but one</td></tr>
+            <td class="num win">+8</td><td>en hızlı, token'da sondan ikinci</td></tr>
           <tr><td class="name">C</td><td class="num">10</td><td class="num">2</td>
-            <td class="num win">+8</td><td>least CPU, fastest start, most token</td></tr>
+            <td class="num win">+8</td><td>en az CPU, en hızlı başlangıç, en çok token</td></tr>
           <tr><td class="name">Zig</td><td class="num">8</td><td class="num">3</td>
-            <td class="num win">+5</td><td>least RAM, 3.3 MB</td></tr>
+            <td class="num win">+5</td><td>en az RAM, 3.3 MB</td></tr>
           <tr><td class="name">Go</td><td class="num">6</td><td class="num">4</td>
-            <td class="num win">+2</td><td>good all round, many lines</td></tr>
+            <td class="num win">+2</td><td>her alanda dengeli, çok satır</td></tr>
           <tr><td class="name">Rust</td><td class="num">7</td><td class="num">5</td>
-            <td class="num win">+2</td><td>fast, safe, many token</td></tr>
+            <td class="num win">+2</td><td>hızlı, güvenli, çok token</td></tr>
           <tr><td class="name">TypeScript</td><td class="num">2</td><td class="num">6</td>
-            <td class="num">&minus;4</td><td>best mix, eat 67 MB</td></tr>
+            <td class="num">&minus;4</td><td>en dengeli, 67 MB yer kaplıyor</td></tr>
           <tr><td class="name">C#</td><td class="num">3</td><td class="num">7</td>
-            <td class="num">&minus;4</td><td>dense code, mid speed</td></tr>
+            <td class="num">&minus;4</td><td>yoğun kod, orta hız</td></tr>
           <tr><td class="name">Java</td><td class="num">4</td><td class="num">8</td>
-            <td class="num">&minus;4</td><td>JIT help later, 5 s start, 191 MB</td></tr>
+            <td class="num">&minus;4</td><td>JIT sonradan hızlandırıyor, 5 s başlangıç, 191 MB</td></tr>
           <tr><td class="name">PHP</td><td class="num">5</td><td class="num">10</td>
-            <td class="num lose">&minus;5</td><td>no dependency, but file store slow it</td></tr>
+            <td class="num lose">&minus;5</td><td>sıfır bağımlılık, ama dosya deposu yavaşlatıyor</td></tr>
           <tr><td class="name">Python</td><td class="num">1</td><td class="num">9</td>
-            <td class="num lose">&minus;8</td><td>fewest token, slow</td></tr>
+            <td class="num lose">&minus;8</td><td>en az token, yavaş</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="hint">Shift = token rank minus speed rank. Plus mean faster than token cost
-      suggest.</p>
+    <p class="hint">Kayma = token sırası eksi hız sırası. Artı değer, dilin token maliyetinin
+      ima ettiğinden daha hızlı olduğu anlamına gelir.</p>
   </section>
 
   <section>
-    <h2>We fixed our own mistakes first</h2>
+    <h2>Önce kendi hatalarımızı düzelttik</h2>
     <div class="callout warn">
-      <strong>Two languages look bad because of us, not because of them.</strong>
-      <p><strong>PHP had OPcache off.</strong> <code>php -S</code> run CLI SAPI, where
-        <code>opcache.enable_cli</code> default Off. So PHP recompile the whole app from source
-        <em>every request</em>. No real deploy do that. Fixing it near halve PHP p50 on mid tier.</p>
-      <p><strong>C and C++ had no keep-alive.</strong> Both send <code>Connection: close</code>
-        every response, so new TCP handshake per request. HTTP/1.1 default is persistent. Zig —
-        also raw socket, no framework — do it right, which prove it our bug. After fix, C small
-        tier go <strong>96 &rarr; 3,454 req/s</strong>, p50 <strong>11.59 &rarr; 0.166 ms</strong>.
-        Before fix we ranked C 8th on speed. C is actually near top.</p>
-      <p>Correct keep-alive cost C and C++ about <strong>+26% token</strong>. Real trade:
-        protocol-correct code is more code. Number here are the corrected ones.</p>
+      <strong>İki dil kendi yüzünden değil, bizim yüzümüzden kötü görünüyordu.</strong>
+      <p><strong>PHP'de OPcache kapalıydı.</strong> <code>php -S</code> CLI SAPI ile çalışır ve
+        orada <code>opcache.enable_cli</code> varsayılan olarak kapalıdır. Bu yüzden PHP
+        <em>her istekte</em> uygulamanın tamamını kaynaktan yeniden derliyordu. Hiçbir gerçek
+        kurulum böyle çalışmaz. Bunu düzeltmek orta ölçekte PHP'nin p50 değerini neredeyse yarıya
+        indirdi.</p>
+      <p><strong>C ve C++ keep-alive kullanmıyordu.</strong> İkisi de her yanıtta
+        <code>Connection: close</code> gönderiyordu, yani her istek için yeni bir TCP el sıkışması.
+        HTTP/1.1 varsayılanı kalıcı bağlantıdır. Zig de çıplak soketle, çerçeve olmadan yazıldı ve
+        bunu doğru yapıyor; hatanın bize ait olduğunu bu kanıtladı. Düzeltmeden sonra C küçük
+        ölçekte <strong>96 &rarr; 3,454 req/s</strong>, p50
+        <strong>11.59 &rarr; 0.166 ms</strong>. Düzeltmeden önce C'yi hızda 8. sıraya koymuştuk.
+        C aslında zirveye yakın.</p>
+      <p>Doğru keep-alive, C ve C++'a yaklaşık <strong>%26 daha fazla token</strong>'a mal oldu.
+        Gerçek bir denge: protokole uygun kod daha fazla koddur. Buradaki bütün sayılar
+        düzeltilmiş hâlleridir.</p>
     </div>
   </section>
 
   <section>
-    <h2>Where PHP time really go</h2>
-    <p class="say">After OPcache fix we measured layer by layer, same server, fresh store, GET
-      only. Answer surprise us.</p>
+    <h2>PHP'nin süresi gerçekte nereye gidiyor</h2>
+    <p class="say">OPcache düzeltmesinden sonra katman katman ölçtük: aynı sunucu, temiz depo,
+      sadece GET. Sonuç bizi şaşırttı.</p>
     <div class="scroll">
       <table>
-        <thead><tr><th>Layer</th><th class="num">p50</th><th class="num">this layer add</th></tr></thead>
+        <thead><tr><th>Katman</th><th class="num">p50</th><th class="num">bu katmanın eklediği</th></tr></thead>
         <tbody>
-          <tr><td class="name">bare PHP, no framework</td><td class="num win">0.874 ms</td>
+          <tr><td class="name">çıplak PHP, çerçeve yok</td><td class="num win">0.874 ms</td>
             <td class="num">&mdash;</td></tr>
-          <tr><td class="name">+ Slim boot, no store, no logic</td><td class="num">5.113 ms</td>
+          <tr><td class="name">+ Slim kurulumu, depo yok, iş mantığı yok</td><td class="num">5.113 ms</td>
             <td class="num lose">+4.24 ms</td></tr>
-          <tr><td class="name">+ our small store and routes</td><td class="num">5.384 ms</td>
+          <tr><td class="name">+ küçük ölçek depomuz ve rotalar</td><td class="num">5.384 ms</td>
             <td class="num">+0.27 ms</td></tr>
-          <tr><td class="name">+ our large store and routes</td><td class="num">6.410 ms</td>
+          <tr><td class="name">+ büyük ölçek depomuz ve rotalar</td><td class="num">6.410 ms</td>
             <td class="num">+1.30 ms</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="say"><strong>Bare PHP 0.874 ms — beat C# and Python.</strong> About 94% of gap is
-      Slim container, router, middleware rebuilt from scratch every request. That is shared-nothing
-      model, what PHP require. Not PHP language slow. Not our store slow. Every other language
-      build router one time at startup and keep it for life of process.</p>
+    <p class="say"><strong>Çıplak PHP 0.874 ms &mdash; C# ve Python'u geçiyor.</strong> Farkın
+      yaklaşık %94'ü, Slim'in konteyneri, yönlendiricisi ve ara katman yığınının her istekte
+      sıfırdan kurulmasından geliyor. Bu, PHP'nin gerektirdiği paylaşımsız modeldir. Yavaş olan
+      PHP dili değil. Yavaş olan bizim depomuz da değil. Diğer bütün diller yönlendiricisini
+      başlangıçta bir kez kurar ve süreç boyunca saklar.</p>
 
     <div class="callout">
-      <strong>So we threw the framework away. PHP now measured with no framework at all.</strong>
-      <p>In Go or Rust, framework is the <em>floor</em> — cannot serve HTTP with less. In PHP,
-        framework is a <em>choice</em>. PHP is request handler by design; one front controller on
-        <code>$_SERVER['REQUEST_URI']</code> is normal PHP, used in production. Measuring Slim
-        charge PHP for a decision many PHP dev never make.</p>
-      <p>So PHP here is zero dependency — no composer, no vendor, no autoloader. Just
-        <code>public/index.php</code> and its own file. Same store, same names, same logic. Pass
-        same 22 / 98 / 139 test.</p>
+      <strong>Bu yüzden çerçeveyi tamamen çıkardık. PHP artık hiçbir çerçeve olmadan
+        ölçülüyor.</strong>
+      <p>Go veya Rust'ta çerçeve <em>tabandır</em>; daha azıyla HTTP sunamazsınız. PHP'de çerçeve
+        bir <em>tercihtir</em>. PHP tasarımı gereği bir istek işleyicisidir;
+        <code>$_SERVER['REQUEST_URI']</code> üzerinde çalışan tek bir ön denetleyici sıradan
+        PHP'dir ve üretimde kullanılır. Sadece Slim'i ölçmek, PHP'yi birçok PHP geliştiricisinin
+        hiç vermediği bir karar için cezalandırır.</p>
+      <p>Yani buradaki PHP sıfır bağımlılıklıdır: composer yok, vendor yok, otomatik yükleyici
+        yok. Sadece <code>public/index.php</code> ve kendi dosyaları. Aynı depo, aynı isimler,
+        aynı iş mantığı. Aynı 22 / 98 / 139 testi geçiyor.</p>
     </div>
 
-    <p class="say">We measured both way before we dropped the framework one, so framework cost is a
-      <em>measured</em> number, not a guess:</p>
+    <p class="say">Çerçeveli sürümü çıkarmadan önce iki yolu da ölçtük. Bu yüzden çerçevenin
+      maliyeti bir tahmin değil, <em>ölçülmüş</em> bir sayıdır:</p>
     <div class="scroll">
       <table>
-        <thead><tr><th>10,000 request</th><th class="num">no framework</th><th class="num">with Slim</th>
-          <th class="num">gain</th></tr></thead>
+        <thead><tr><th>10,000 istek</th><th class="num">çerçeve yok</th><th class="num">Slim ile</th>
+          <th class="num">kazanç</th></tr></thead>
         <tbody>
-          <tr><td class="name">small tier p50</td><td class="num win">1.362 ms</td>
+          <tr><td class="name">küçük ölçek p50</td><td class="num win">1.362 ms</td>
             <td class="num lose">6.102 ms</td><td class="num win">4.5&times;</td></tr>
-          <tr><td class="name">mid tier p50</td><td class="num win">1.452 ms</td>
+          <tr><td class="name">orta ölçek p50</td><td class="num win">1.452 ms</td>
             <td class="num lose">6.306 ms</td><td class="num win">4.3&times;</td></tr>
-          <tr><td class="name">large tier p50</td><td class="num">8.636 ms</td>
+          <tr><td class="name">büyük ölçek p50</td><td class="num">8.636 ms</td>
             <td class="num lose">17.588 ms</td><td class="num">2.0&times;</td></tr>
-          <tr><td class="name">large CPU ms/req</td><td class="num">5.097</td>
+          <tr><td class="name">büyük CPU ms/istek</td><td class="num">5.097</td>
             <td class="num lose">9.355</td><td class="num">1.8&times;</td></tr>
-          <tr><td class="name">large token</td><td class="num win">15,607</td>
+          <tr><td class="name">büyük token</td><td class="num win">15,607</td>
             <td class="num lose">16,238</td><td class="num win">1.04&times;</td></tr>
         </tbody>
       </table>
     </div>
 
-    <p class="say"><strong>No framework is 4.5&times; faster at small, 4.3&times; at mid,
-      2.0&times; at large, 5&times; less CPU — and cost fewer token too.</strong> Plus zero
-      manifest, because no composer file. So the framework cost about 4.2 ms every request and save
-      nothing we measured. Old Slim run kept in
-      <code>perf-variance/removed-slim-run*.json</code> so anyone can check.</p>
-    <p class="say">These PHP number are <strong>median of three run</strong>. They hardly needed it:
-      three run gave <strong>1.362, 1.361, 1.376 ms</strong> at small — inside 1.1%. PHP is one of
-      the <em>most</em> reproducible build in the whole benchmark. The old framework build swung
-      13.73, 6.07, 6.10 ms, because its autoloader touch about a hundred file per request. So the
-      wobble was the framework, never the language.</p>
+    <p class="say"><strong>Çerçeve olmadan küçük ölçekte 4.5&times;, orta ölçekte 4.3&times;,
+      büyük ölçekte 2.0&times; daha hızlı, 5&times; daha az CPU &mdash; ve token maliyeti de daha
+      düşük.</strong> Üstüne composer dosyası olmadığı için sıfır manifest. Yani çerçeve her
+      istekte yaklaşık 4.2 ms'e mal oldu ve ölçtüğümüz hiçbir şeyi iyileştirmedi. Eski Slim
+      ölçümleri <code>perf-variance/removed-slim-run*.json</code> içinde saklanıyor, isteyen
+      kontrol edebilir.</p>
+    <p class="say">Buradaki PHP sayıları <strong>üç koşunun ortancasıdır</strong>. Aslında buna pek
+      gerek yoktu: üç koşu küçük ölçekte <strong>1.362, 1.361, 1.376 ms</strong> verdi &mdash;
+      %1.1 aralığında. PHP, bütün kıyaslamada <em>en</em> tekrarlanabilir uygulamalardan biri.
+      Eski çerçeveli sürüm ise 13.73, 6.07, 6.10 ms arasında salınıyordu, çünkü otomatik
+      yükleyicisi her istekte yaklaşık yüz dosyaya dokunuyordu. Yani oynaklık çerçeveden
+      geliyordu, dilden değil.</p>
   </section>
 
   <section>
-    <h2>Third PHP fix: our store was O(n)</h2>
-    <p class="say">Even with no framework, PHP looked bad at large tier. We measured why, and it
-      was our fault again.</p>
+    <h2>Üçüncü PHP düzeltmesi: depomuz O(n) idi</h2>
+    <p class="say">Çerçeve olmadan bile PHP büyük ölçekte kötü görünüyordu. Nedenini ölçtük ve
+      suç yine bizdeydi.</p>
     <div class="scroll">
       <table>
-        <thead><tr><th>Store operation</th><th class="num">small store 501 B</th>
-          <th class="num">big store 144 KB</th></tr></thead>
+        <thead><tr><th>Depo işlemi</th><th class="num">küçük depo 501 B</th>
+          <th class="num">büyük depo 144 KB</th></tr></thead>
         <tbody>
           <tr><td class="name">file_get_contents</td><td class="num">0.049 ms</td><td class="num">0.039 ms</td></tr>
           <tr><td class="name">file_put_contents</td><td class="num">0.327 ms</td><td class="num">0.741 ms</td></tr>
           <tr><td class="name">json_decode</td><td class="num">0.016 ms</td><td class="num lose">8.581 ms</td></tr>
-          <tr><td class="name">full read + decode + encode + write</td><td class="num">0.641 ms</td><td class="num lose">11.519 ms</td></tr>
+          <tr><td class="name">tam okuma + çözme + kodlama + yazma</td><td class="num">0.641 ms</td><td class="num lose">11.519 ms</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="say"><strong>File I/O was never the problem. JSON was.</strong> Large tier grow an
-      audit log and outbox, and our store re-serialize the <em>whole dataset</em> every request. So
-      PHP pay <strong>O(total state) per request</strong> for what every other language do as O(1)
-      append to a list in RAM. Our design, not PHP.</p>
-    <p class="say">Fix: audit and outbox move to append-only JSON Lines file, counters in
-      <code>store.json</code> so <code>/stats</code> and <code>/metrics</code> stay O(1), and a
-      watermark so flush stay O(1) and <code>delivered</code> is derived not rewritten.</p>
+    <p class="say"><strong>Sorun hiçbir zaman dosya G/Ç değildi. JSON'du.</strong> Büyük ölçek
+      bir denetim kaydı ve giden kutusu biriktiriyor; bizim depomuz ise her istekte <em>tüm veri
+      kümesini</em> yeniden serileştiriyordu. Yani PHP, diğer bütün dillerin RAM'deki bir listeye
+      O(1) ekleme olarak yaptığı iş için istek başına <strong>O(toplam durum)</strong> ödüyordu.
+      Bu bizim tasarımımız, PHP değil.</p>
+    <p class="say">Düzeltme: denetim kaydı ve giden kutusu, yalnızca ekleme yapılan JSON Lines
+      dosyalarına taşındı; <code>/stats</code> ve <code>/metrics</code> O(1) kalsın diye
+      <code>store.json</code> içine sayaçlar eklendi; boşaltma O(1) kalsın ve
+      <code>delivered</code> yeniden yazılmak yerine türetilsin diye bir su seviyesi işareti
+      eklendi.</p>
     <div class="scroll">
       <table>
-        <thead><tr><th>2,000 status change on one task</th><th class="num">p50 start</th>
-          <th class="num">p50 end</th><th class="num">drift</th></tr></thead>
+        <thead><tr><th>Tek bir görevde 2,000 durum değişikliği</th><th class="num">p50 başlangıç</th>
+          <th class="num">p50 bitiş</th><th class="num">sapma</th></tr></thead>
         <tbody>
-          <tr><td class="name">before fix</td><td class="num">7.783 ms</td><td class="num lose">18.402 ms</td><td class="num lose">2.36&times;</td></tr>
-          <tr><td class="name">after fix</td><td class="num">7.523 ms</td><td class="num win">7.547 ms</td><td class="num win">1.00&times;</td></tr>
+          <tr><td class="name">düzeltmeden önce</td><td class="num">7.783 ms</td><td class="num lose">18.402 ms</td><td class="num lose">2.36&times;</td></tr>
+          <tr><td class="name">düzeltmeden sonra</td><td class="num">7.523 ms</td><td class="num win">7.547 ms</td><td class="num win">1.00&times;</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="say">Flat. Large tier p50 drop <strong>25.2 &rarr; 8.6 ms</strong>. Cost of the fix:
-      +1,216 token, because O(1) persistence is more code than O(n). That move PHP from 4th to 5th
-      on large-tier token. Honest trade, and the number here include it.</p>
+    <p class="say">Düz. Büyük ölçekte p50 <strong>25.2 &rarr; 8.6 ms</strong>'ye düştü.
+      Düzeltmenin maliyeti: +1,216 token, çünkü O(1) kalıcılık O(n)'den daha fazla koddur. Bu,
+      PHP'yi büyük ölçek token sıralamasında 4.'lükten 5.'liğe taşıdı. Dürüst bir denge ve
+      buradaki sayılar bunu içeriyor.</p>
     <div class="callout warn">
-      <strong>Three handicap found on PHP. All three were ours.</strong>
-      <p>OPcache off. Framework rebuilt per request. Store O(n). Two of three were invisible until
-        we measured layer by layer. Lesson: PHP shared-nothing model fight any benchmark that
-        assume state live in memory, and a naive port quietly bill PHP for it. Read any PHP
-        benchmark — this one too — with that in mind.</p>
+      <strong>PHP'de üç engel bulundu. Üçü de bizimdi.</strong>
+      <p>OPcache kapalı. Çerçeve her istekte yeniden kuruluyor. Depo O(n). Üçünden ikisi, katman
+        katman ölçene kadar görünmezdi. Ders: PHP'nin paylaşımsız modeli, durumun bellekte
+        yaşadığını varsayan her kıyaslamayla çatışır ve saf bir aktarım bu bedeli sessizce PHP'ye
+        yazar. Her PHP kıyaslamasını &mdash; bunu da &mdash; bunu bilerek okuyun.</p>
     </div>
   </section>
 
   <section>
-    <h2>Big findings</h2>
+    <h2>Öne çıkan sonuçlar</h2>
     <div class="cards">
       <div class="card">
-        <h3>PHP still only one that degrade</h3>
-        <p>After the store fix, large tier PHP go 2.36 ms at 100 request &rarr; 8.64 ms at
-          10,000. Remaining growth is 1,000 soft-deleted task row sitting in the store as live
-          domain state — which every language in the tier also hold. Legitimate, so it stay.</p>
+        <h3>Yük altında bozulan tek dil hâlâ PHP</h3>
+        <p>Depo düzeltmesinden sonra büyük ölçekte PHP, 100 istekte 2.36 ms'den 10,000 istekte
+          8.64 ms'ye çıkıyor. Kalan artış, depoda canlı alan verisi olarak duran 1,000 mantıksal
+          silinmiş görev satırından geliyor &mdash; bu satırları o ölçekteki her dil de tutuyor.
+          Meşru bir maliyet, bu yüzden kalıyor.</p>
       </div>
       <div class="card">
-        <h3>Framework cost PHP about 4.2 ms per request and save nothing</h3>
-        <p>No framework is faster <em>and</em> smaller: 4.5&times; faster p50 at small, 4.3&times;
-          at mid, 2.0&times; at large, 5&times; less CPU, and 15,607 token vs 16,238. The framework
-          also add a <code>composer.json</code> and a <code>vendor/</code> tree. Nothing measured
-          here got better for it, so PHP is measured with none.</p>
+        <h3>Çerçeve, PHP'ye istek başına yaklaşık 4.2 ms'e mal oldu ve hiçbir şey kazandırmadı</h3>
+        <p>Çerçeve olmadan hem daha hızlı hem daha küçük: küçük ölçekte 4.5&times;, orta ölçekte
+          4.3&times;, büyük ölçekte 2.0&times; daha hızlı p50, 5&times; daha az CPU ve 16,238
+          yerine 15,607 token. Çerçeve ayrıca bir <code>composer.json</code> ve bir
+          <code>vendor/</code> ağacı ekliyor. Ölçtüğümüz hiçbir şey bununla iyileşmedi, bu yüzden
+          PHP çerçevesiz ölçülüyor.</p>
       </div>
       <div class="card">
-        <h3>Java JIT worth 2.2&times;</h3>
-        <p>Java get faster while run: p50 1.304 &rarr; 0.595 ms. Only big improver, drift
-          0.46&times;. But pay 5,275 ms cold start and 191 MB RAM. Fine for long server. Bad for
-          scale-to-zero.</p>
+        <h3>Java JIT 2.2&times; değerinde</h3>
+        <p>Java çalışırken hızlanıyor: p50 1.304 &rarr; 0.595 ms. Belirgin biçimde iyileşen tek
+          dil, sapma 0.46&times;. Ama bedeli 5,275 ms soğuk başlangıç ve 191 MB RAM. Uzun süre
+          açık kalan sunucu için uygun. Sıfıra ölçeklenen kurulum için kötü.</p>
       </div>
       <div class="card">
-        <h3>C use least CPU of all</h3>
-        <p>0.059 CPU ms per request on big app. That is 86&times; less than PHP, 27&times; less
-          than Java. And fastest cold start, 47 ms.</p>
+        <h3>En az CPU'yu C kullanıyor</h3>
+        <p>Büyük uygulamada istek başına 0.059 CPU ms. Bu, PHP'den 86&times;, Java'dan 27&times;
+          daha az. Üstelik en hızlı soğuk başlangıç: 47 ms.</p>
       </div>
       <div class="card">
-        <h3>Zig use least RAM</h3>
-        <p>3.3 MB idle. Java use 191 MB — 57&times; more. Zig do it on standard library only,
-          zero dependency, all three tiers.</p>
+        <h3>En az RAM'i Zig kullanıyor</h3>
+        <p>Boşta 3.3 MB. Java 191 MB kullanıyor &mdash; 57&times; fazlası. Zig bunu sadece standart
+          kütüphaneyle, sıfır bağımlılıkla ve üç ölçeğin hepsinde yapıyor.</p>
       </div>
       <div class="card">
-        <h3>C# dense, not bloated</h3>
-        <p>C# beat Python on line count at small and mid — 134 vs 138, 451 vs 472. Modern C# not
-          old enterprise boilerplate.</p>
+        <h3>C# yoğun, şişkin değil</h3>
+        <p>C#, küçük ve orta ölçekte satır sayısında Python'u geçiyor &mdash; 138'e 134 ve 472'ye
+          451. Modern C#, eski kurumsal kalıp kod değil.</p>
       </div>
       <div class="card">
-        <h3>Runtime spread crush token spread</h3>
-        <p>Token spread 2.80&times;. Cold start 112&times;. CPU 86&times;. RAM 57&times;. Speed
-          40&times;. Source size flattest thing measured here.</p>
+        <h3>Çalışma zamanı farkı, token farkını eziyor</h3>
+        <p>Token farkı 2.80&times;. Soğuk başlangıç 112&times;. CPU 86&times;. RAM 57&times;. Hız
+          40&times;. Kaynak kod boyutu, burada ölçülen en düz eksen.</p>
       </div>
     </div>
   </section>
 
   <section>
-    <h2>Know this before you quote number</h2>
+    <h2>Bir sayıyı alıntılamadan önce bunları bilin</h2>
     <ul class="plain">
-      <li><strong>Framework included.</strong> Each language use what a real team would pick — which
-        for PHP mean no framework, and for C, C++, Zig mean raw socket. So this measure ecosystem
-        too, not pure syntax. FastAPI hide work C must write by hand.</li>
-      <li><strong>Three things left out on purpose.</strong> No password hash, no signed token,
-        no timestamp in body. Keep work identical across ten languages. All three cheap in
-        Python, expensive in C — so leaving them out make C number <em>kinder</em>, not
-        harsher.</li>
-      <li><strong>Count read cost, not write cost.</strong> This count tokens to read working
-        code. Not count retries a compiler would catch. That is where strong types pay back.</li>
-      <li><strong>Tokenizer is proxy.</strong> tiktoken, not Claude tokenizer. Ratio hold across
-        two encoders. Absolute number will move.</li>
-      <li><strong>p99 lie on Windows.</strong> Tail land on 15.6 ms timer tick. p50 and p90
-        solid.</li>
-      <li><strong>req/s carry 2&times; uncertainty for fast build.</strong> Measured by running
-        same code three times. Rank on p50. Throughput order among the five fast language is not
-        established here.</li>
-      <li><strong>One machine, one run, one request at a time.</strong> No concurrency test — PHP
-        built-in server and three others single-thread by design, so concurrency test would rank
-        thread model, not language.</li>
-      <li><strong>Three sizes = three dots.</strong> Trend clear, curve shape not proven.</li>
-      <li><strong>C hit own ceiling.</strong> C use fixed arrays. At 10,000 request on big app,
-        audit table full at 2,048 and 748 request answer <code>409</code>. Real limit, and it make
-        C latency there look slightly better than true.</li>
+      <li><strong>Çerçeveler dahil.</strong> Her dil, gerçek bir ekibin seçeceği aracı kullanıyor
+        &mdash; bu PHP için çerçevesiz olmak, C, C++ ve Zig için çıplak soket anlamına geliyor.
+        Yani bu ölçüm ekosistemi de kapsıyor, sadece söz dizimini değil. FastAPI, C'nin elle
+        yazmak zorunda olduğu işi gizliyor.</li>
+      <li><strong>Üç şey bilerek dışarıda bırakıldı.</strong> Parola özeti yok, imzalı token yok,
+        yanıt gövdesinde zaman damgası yok. Böylece iş on dilde birebir aynı kalıyor. Üçü de
+        Python'da ucuz, C'de pahalı &mdash; yani bunları dışarıda bırakmak C'nin sayılarını
+        <em>daha iyi</em> gösteriyor, daha kötü değil.</li>
+      <li><strong>Okuma maliyetini sayıyor, yazma maliyetini değil.</strong> Bu ölçüm, çalışan
+        kodu okumak için gereken tokenleri sayıyor. Bir derleyicinin yakalayacağı tekrar
+        denemeleri saymıyor. Güçlü tiplerin bedelini geri ödediği yer tam orası.</li>
+      <li><strong>Tokenleştirici bir vekil.</strong> tiktoken kullanıldı, Claude'un
+        tokenleştiricisi değil. Oranlar iki kodlayıcıda da aynı kalıyor. Mutlak sayılar başka
+        yerde değişir.</li>
+      <li><strong>Windows'ta p99 yanıltıyor.</strong> Kuyruk değerleri 15.6 ms'lik zamanlayıcı
+        adımına oturuyor. p50 ve p90 sağlam.</li>
+      <li><strong>Hızlı uygulamalarda req/s 2&times; belirsizlik taşıyor.</strong> Aynı kodu üç kez
+        çalıştırarak ölçtük. Sıralamayı p50 üzerinden yapın. Beş hızlı dil arasındaki verim
+        sıralaması burada kanıtlanmadı.</li>
+      <li><strong>Tek makine, tek koşu, teker teker istek.</strong> Eşzamanlılık testi yok:
+        PHP'nin dahili sunucusu ve üç dil daha tasarımı gereği tek iş parçacıklı, bu yüzden
+        eşzamanlılık testi dilleri değil iş parçacığı modellerini sıralardı.</li>
+      <li><strong>Üç ölçek = üç nokta.</strong> Eğilim net, ama eğrinin şekli kanıtlanmadı.</li>
+      <li><strong>C kendi tavanına çarptı.</strong> C sabit boyutlu diziler kullanıyor. Büyük
+        uygulamada 10,000 istekte denetim tablosu 2,048'de doldu ve 748 istek <code>409</code>
+        yanıtı aldı. Gerçek bir sınır ve C'nin oradaki gecikmesini olduğundan biraz daha iyi
+        gösteriyor.</li>
     </ul>
   </section>
 
   <footer>
-    30 builds &middot; 259 tests each, all pass &middot; 90 runtime measurements &middot;
-    2 tokenizers &middot; 29,973 source lines<br>
+    30 uygulama &middot; her biri 259 test, hepsi geçti &middot; 90 çalışma zamanı ölçümü
+    &middot; 2 tokenleştirici &middot; 29,973 kaynak satırı<br>
     CPython 3.13 &middot; Node + tsc 5 &middot; .NET 10 &middot; Go 1.26 &middot;
     PHP 8.5 (OPcache on, no framework) &middot; Temurin JDK 21 &middot; rustc stable &middot;
     Zig 0.16 &middot; gcc/g++ 16<br>
-    Long version, full method and divergence register:
-    <code>docs/benchmark-detailed.html</code> and <code>METHODOLOGY.md</code>.<br>
-    Source, raw data and every implementation:
+    Uzun sürüm, tam yöntem ve sapma kaydı (İngilizce):
+    <code>docs/benchmark-detailed.html</code> ve <code>METHODOLOGY.md</code>.<br>
+    Kaynak kod, ham veri ve bütün uygulamalar:
     <a href="https://github.com/onurtirpan/agentic-llm-token-and-performance-tests"
        rel="noopener">github.com/onurtirpan/agentic-llm-token-and-performance-tests</a>
   </footer>
@@ -672,7 +699,7 @@
       if (th.hasAttribute("data-nosort")) return;
       th.tabIndex = 0;
       th.setAttribute("role", "button");
-      th.setAttribute("aria-label", th.textContent.trim() + ", sort");
+      th.setAttribute("aria-label", th.textContent.trim() + ", sırala");
 
       function run() {
         var body = table.tBodies[0];

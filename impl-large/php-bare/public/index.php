@@ -548,7 +548,7 @@ $routes = [
     [$limit, $offset, $sort, $order] = readPage(SEQ_SORTS);
     $query = $_GET;
     $rows = [];
-    foreach ($store->audit as $entry) {
+    foreach ($store->auditEntries() as $entry) {
         if ((!isset($query['actorId']) || (string) $entry->actorId === $query['actorId'])
             && (!isset($query['resource']) || $entry->resource === $query['resource'])
             && (!isset($query['action']) || $entry->action === $query['action'])) {
@@ -563,7 +563,7 @@ $routes = [
     [$limit, $offset, $sort, $order] = readPage(SEQ_SORTS);
     $wanted = $_GET['delivered'] ?? null;
     $rows = [];
-    foreach ($store->outbox as $event) {
+    foreach ($store->outboxEvents() as $event) {
         if ($wanted === null || $event->delivered === ($wanted === 'true')) {
             $rows[] = serializeOutbox($event);
         }
@@ -595,7 +595,7 @@ $requestId = headerLine('X-Request-Id') ?: bin2hex(random_bytes(6));
 $rawBody = (string) file_get_contents('php://input');
 $method = (string) $_SERVER['REQUEST_METHOD'];
 $path = explode('?', (string) $_SERVER['REQUEST_URI'], 2)[0];
-$auditBefore = count($store->audit);
+$auditBefore = $store->auditCount;
 $started = hrtime(true);
 [$route, $handler, $args] = matchRoute($routes, $method, $path);
 try {
@@ -620,7 +620,7 @@ file_put_contents('php://stdout', json_encode([
     'durationMs' => intdiv(hrtime(true) - $started, 1000000),
     'userId' => $userId,
     'quotaRemaining' => $quotaRemaining,
-    'auditSeq' => count($store->audit) - $auditBefore,
+    'auditSeq' => $store->auditCount - $auditBefore,
 ], JSON_UNESCAPED_SLASHES) . "\n");
 $store->save();
 

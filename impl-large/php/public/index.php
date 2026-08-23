@@ -229,7 +229,7 @@ function observe(Request $request, RequestHandler $handler,
     $userId = null;
     $quotaRemaining = null;
     $replayed = false;
-    $auditBefore = count($store->audit);
+    $auditBefore = $store->auditCount;
     $started = hrtime(true);
     try {
         $response = $handler->handle($request);
@@ -252,7 +252,7 @@ function observe(Request $request, RequestHandler $handler,
         'durationMs' => intdiv(hrtime(true) - $started, 1000000),
         'userId' => $userId,
         'quotaRemaining' => $quotaRemaining,
-        'auditSeq' => count($store->audit) - $auditBefore,
+        'auditSeq' => $store->auditCount - $auditBefore,
     ], JSON_UNESCAPED_SLASHES) . "\n");
     $store->save();
     $response = $response->withHeader('X-Request-Id', $requestId);
@@ -602,7 +602,7 @@ $app->get('/audit', function (Request $request, Response $response): Response {
     [$limit, $offset, $sort, $order] = readPage($request, SEQ_SORTS);
     $query = $request->getQueryParams();
     $rows = [];
-    foreach ($store->audit as $entry) {
+    foreach ($store->auditEntries() as $entry) {
         if ((!isset($query['actorId']) || (string) $entry->actorId === $query['actorId'])
             && (!isset($query['resource']) || $entry->resource === $query['resource'])
             && (!isset($query['action']) || $entry->action === $query['action'])) {
@@ -617,7 +617,7 @@ $app->get('/outbox', function (Request $request, Response $response): Response {
     [$limit, $offset, $sort, $order] = readPage($request, SEQ_SORTS);
     $wanted = $request->getQueryParams()['delivered'] ?? null;
     $rows = [];
-    foreach ($store->outbox as $event) {
+    foreach ($store->outboxEvents() as $event) {
         if ($wanted === null || $event->delivered === ($wanted === 'true')) {
             $rows[] = serializeOutbox($event);
         }

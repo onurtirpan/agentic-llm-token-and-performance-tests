@@ -24,8 +24,11 @@ __pycache__/
 
 # PHP has no cross-request memory, so its store is a file on disk. It is runtime
 # state, recreated on every run, and must never be committed — a stale one makes
-# the conformance suite fail on its first case.
+# the conformance suite fail on its first case. The two append-only logs carry the
+# audit trail and the outbox, which store.json is too expensive to hold.
 store.json
+audit.log
+outbox.log
 
 # Editor and OS noise
 .vscode/

@@ -603,12 +603,12 @@
     "framework": "Slim",
     "source": {
       "files": 4,
-      "lines": 1661,
-      "codeLines": 1435,
-      "characters": 56921,
-      "bytes": 56929,
-      "tokens": 15022,
-      "tokensCl100k": 14958
+      "lines": 1775,
+      "codeLines": 1495,
+      "characters": 61905,
+      "bytes": 61919,
+      "tokens": 16238,
+      "tokensCl100k": 16183
     },
     "manifest": {
       "files": 1,
@@ -626,12 +626,12 @@
     "framework": "no framework",
     "source": {
       "files": 4,
-      "lines": 1657,
-      "codeLines": 1418,
-      "characters": 53607,
-      "bytes": 53615,
-      "tokens": 14391,
-      "tokensCl100k": 14349
+      "lines": 1771,
+      "codeLines": 1478,
+      "characters": 58591,
+      "bytes": 58605,
+      "tokens": 15607,
+      "tokensCl100k": 15574
     },
     "manifest": {
       "files": 0,

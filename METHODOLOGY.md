@@ -369,6 +369,62 @@ This makes PHP the one language in the benchmark measured both ways, which is
 useful beyond PHP: it is a direct measurement of what a framework costs in tokens
 and in latency, holding the language and the logic constant.
 
+### PHP's store was accidentally O(n) per request
+
+A third PHP handicap, found by asking why the large tier was so much worse than
+the other two. With a **fresh** store, bare PHP answers `GET /health` at the
+large tier in **1.656 ms** — healthy, and in the same range as Python. After a
+10,000-request run it had degraded to **25.2 ms**.
+
+A direct micro-benchmark of the store showed where that came from:
+
+| Operation | small store, 501 B | large store, 144 KB |
+| --- | ---: | ---: |
+| `file_get_contents` | 0.049 ms | 0.039 ms |
+| `file_put_contents` | 0.327 ms | 0.741 ms |
+| `json_decode` | 0.016 ms | **8.581 ms** |
+| full read + decode + encode + write | 0.641 ms | **11.519 ms** |
+
+**File I/O was never the problem. JSON serialization of the growing dataset
+was.** The large tier accumulates an audit trail and an outbox, and our `Store`
+re-serialized the entire dataset on every request — so PHP paid **O(total
+accumulated state) per request** for an operation every other language performs
+as an O(1) append to an in-memory list. That was a defect in how we chose to
+persist, not a property of PHP.
+
+The fix, applied to both PHP variants: `audit` and `outbox` moved to append-only
+JSON Lines files written with `FILE_APPEND` and never rewritten, with `auditCount`,
+`outboxCount` and `outboxDelivered` counters in `store.json` so `/stats` and
+`/metrics` stay O(1), and an `outboxFlushedThrough` watermark so
+`POST /outbox/flush` stays O(1) and each event's `delivered` flag is derived on
+read as `seq <= outboxFlushedThrough` rather than rewritten in place. The log
+files are read only by `GET /audit` and `GET /outbox`.
+
+An isolated test — 2,000 status changes on one task, so nothing but the audit
+trail grows — confirms the penalty is gone:
+
+| | p50 at start | p50 after 2,000 | drift |
+| --- | ---: | ---: | ---: |
+| before the fix | 7.783 ms | 18.402 ms | 2.36x |
+| after the fix | 7.523 ms | 7.547 ms | **1.00x** |
+
+A mixed create-and-delete workload still drifts 1.69x after the fix, but that
+residue is **not** the audit trail: it soft-deletes 1,000 tasks, and those rows
+remain in `store.json` as live domain state that every implementation in the tier
+also holds. That part is legitimate and stays.
+
+The fix costs tokens: the large-tier `Store.php` grew from 219 to 335 lines, so
+bare PHP went from 14,391 to 15,607 tokens and from 1.36x to 1.48x, moving from
+fourth to fifth place at the large tier. O(1) persistence is more code than
+O(n) persistence, and the honest number is the one with the fix in.
+
+**Three separate handicaps were found on PHP and all three were ours**: OPcache
+disabled, a framework rebuilt per request, and an O(n) store. Two of the three
+were invisible until a layered probe attributed the time. The general lesson is
+that PHP's shared-nothing execution model interacts badly with a benchmark that
+assumes in-memory state, and a naive port silently charges PHP for that. Any PHP
+benchmark, including this one, should be read with that in mind.
+
 ### What was checked and left alone
 
 Everything else was reviewed for a comparable handicap and found fair: all ten

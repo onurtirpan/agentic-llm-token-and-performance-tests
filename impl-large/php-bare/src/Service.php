@@ -470,14 +470,7 @@ function workload(Store $store, User $user, string $groupBy): array
 
 function flushOutbox(Store $store): int
 {
-    $flushed = 0;
-    foreach ($store->outbox as $event) {
-        if (!$event->delivered) {
-            $event->delivered = true;
-            $flushed += 1;
-        }
-    }
-    return $flushed;
+    return $store->flushOutbox();
 }
 
 function metrics(Store $store): array
@@ -491,7 +484,7 @@ function metrics(Store $store): array
         $routes[] = ['route' => $route, 'count' => $count];
     }
     return ['requests' => $store->requests, 'byStatus' => (object) $byStatus,
-        'byRoute' => $routes, 'auditEntries' => count($store->audit),
+        'byRoute' => $routes, 'auditEntries' => $store->auditCount,
         'outboxPending' => $store->outboxPending()];
 }
 
@@ -527,7 +520,7 @@ function stats(Store $store): array
         'byStatus' => $byStatus,
         'avgScore' => $total === 0 ? 0.0 : round($sumScore / $total, 2),
         'topProjectName' => $best?->name,
-        'auditEntries' => count($store->audit),
+        'auditEntries' => $store->auditCount,
         'outboxPending' => $store->outboxPending(),
     ];
 }

@@ -1,0 +1,115 @@
+[
+  {
+    "tier": "small",
+    "language": "php-bare",
+    "count": 10000,
+    "coldStartMs": 142.71,
+    "probeFloorMs": 1.835,
+    "idleRssMb": 33.54,
+    "cold": {
+      "requests": 56,
+      "meanMs": 5.9989,
+      "p50Ms": 1.3605,
+      "p90Ms": 19.7008,
+      "p99Ms": 49.7357,
+      "maxMs": 49.7357,
+      "minMs": 0.9701,
+      "errors": 0
+    },
+    "warm": {
+      "requests": 10003,
+      "meanMs": 6.5057,
+      "p50Ms": 1.3623,
+      "p90Ms": 22.1025,
+      "p99Ms": 55.1664,
+      "maxMs": 98.3939,
+      "minMs": 0.7088,
+      "errors": 0,
+      "statuses": {
+        "200": 7145,
+        "201": 1429,
+        "204": 1429
+      },
+      "wallSeconds": 65.4708,
+      "rps": 152.8,
+      "cpuSeconds": 7.3594,
+      "cpuMsPerRequest": 0.7357,
+      "peakRssMb": 34.2
+    }
+  },
+  {
+    "tier": "mid",
+    "language": "php-bare",
+    "count": 10000,
+    "coldStartMs": 200.48,
+    "probeFloorMs": 2.578,
+    "idleRssMb": 34.32,
+    "cold": {
+      "requests": 54,
+      "meanMs": 9.0449,
+      "p50Ms": 1.6102,
+      "p90Ms": 26.5595,
+      "p99Ms": 56.6377,
+      "maxMs": 56.6377,
+      "minMs": 1.0284,
+      "errors": 0
+    },
+    "warm": {
+      "requests": 10008,
+      "meanMs": 6.8246,
+      "p50Ms": 1.4518,
+      "p90Ms": 22.8832,
+      "p99Ms": 58.7675,
+      "maxMs": 114.3578,
+      "minMs": 0.7358,
+      "errors": 0,
+      "statuses": {
+        "200": 7784,
+        "201": 1112,
+        "204": 1112
+      },
+      "wallSeconds": 68.7164,
+      "rps": 145.6,
+      "cpuSeconds": 9.0156,
+      "cpuMsPerRequest": 0.9008,
+      "peakRssMb": 34.74
+    }
+  },
+  {
+    "tier": "large",
+    "language": "php-bare",
+    "count": 10000,
+    "coldStartMs": 211.56,
+    "probeFloorMs": 15.007,
+    "idleRssMb": 34.67,
+    "cold": {
+      "requests": 50,
+      "meanMs": 10.9345,
+      "p50Ms": 2.1381,
+      "p90Ms": 33.7341,
+      "p99Ms": 73.8352,
+      "maxMs": 73.8352,
+      "minMs": 1.3828,
+      "errors": 0
+    },
+    "warm": {
+      "requests": 10000,
+      "meanMs": 15.5797,
+      "p50Ms": 8.4179,
+      "p90Ms": 34.7403,
+      "p99Ms": 69.1979,
+      "maxMs": 105.9394,
+      "minMs": 1.5391,
+      "errors": 0,
+      "statuses": {
+        "200": 9000,
+        "201": 1000
+      },
+      "wallSeconds": 156.3777,
+      "rps": 63.9,
+      "cpuSeconds": 51.8281,
+      "cpuMsPerRequest": 5.1828,
+      "peakRssMb": 36.84
+    }
+  }
+]

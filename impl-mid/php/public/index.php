@@ -1,15 +1,7 @@
 <?php
-// Task Service, mid tier — Slim implementation.
+// Task Service, mid tier — bare PHP implementation, no framework.
 
 declare(strict_types=1);
-
-require __DIR__ . '/../vendor/autoload.php';
-
-use Psr\Http\Message\ResponseFactoryInterface;
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
-use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
-use Slim\Factory\AppFactory;
 
 const MAX_TITLE_LENGTH = 80;
 const MAX_NAME_LENGTH = 60;
@@ -196,15 +188,16 @@ function fail(string $field, string $message): array
     return ['field' => $field, 'message' => $message];
 }
 
-function writeJson(Response $response, int $status, mixed $body): Response
+function writeJson(int $status, mixed $body): void
 {
-    $response->getBody()->write((string) json_encode($body));
-    return $response->withHeader('Content-Type', 'application/json')->withStatus($status);
+    http_response_code($status);
+    header('Content-Type: application/json');
+    echo (string) json_encode($body);
 }
 
-function readBody(Request $request): array
+function readBody(): array
 {
-    $raw = trim((string) $request->getBody());
+    $raw = trim((string) file_get_contents('php://input'));
     if ($raw === '') {
         return [];
     }
@@ -269,9 +262,9 @@ function parseId(string $raw): int
 }
 
 /** @return array{int, int, string, string} */
-function readPage(Request $request, array $allowed): array
+function readPage(array $allowed): array
 {
-    $query = $request->getQueryParams();
+    $query = $_GET;
     $errors = [];
     $limit = DEFAULT_LIMIT;
     $offset = 0;
@@ -311,10 +304,10 @@ function paginate(array $rows, int $limit, int $offset, string $sort, string $or
         'total' => count($rows), 'limit' => $limit, 'offset' => $offset];
 }
 
-function authenticate(Store $store, Request $request): User
+function authenticate(Store $store): User
 {
     global $userId;
-    $header = $request->getHeaderLine('Authorization');
+    $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     $token = str_starts_with($header, 'Bearer ') ? substr($header, 7) : '';
     if (!isset($store->sessions[$token])) {
         throw new AppError(401, 'unauthorized', 'authentication is required');
@@ -352,288 +345,281 @@ function reachableTask(Store $store, int $taskId, User $user): Task
     return $task;
 }
 
-function observe(Request $request, RequestHandler $handler,
-    ResponseFactoryInterface $factory): Response
+function dispatch(array $routes, string $method, string $path): void
 {
-    global $userId;
-    $requestId = $request->getHeaderLine('X-Request-Id') ?: bin2hex(random_bytes(6));
-    $userId = null;
-    $started = hrtime(true);
-    try {
-        $response = $handler->handle($request);
-    } catch (AppError $error) {
-        $response = writeJson($factory->createResponse(), $error->status, ['error' => [
-            'code' => $error->code, 'message' => $error->message,
-            'requestId' => $requestId, 'details' => $error->details,
-        ]]);
+    foreach ($routes as [$verb, $pattern, $handler]) {
+        if ($verb === $method && preg_match($pattern, $path, $match) === 1) {
+            $handler(...array_slice($match, 1));
+            return;
+        }
     }
-    $status = $response->getStatusCode();
-    file_put_contents('php://stdout', json_encode([
-        'level' => $status >= 500 ? 'error' : ($status >= 400 ? 'warn' : 'info'),
-        'requestId' => $requestId,
-        'method' => $request->getMethod(),
-        'path' => $request->getUri()->getPath(),
-        'status' => $status,
-        'durationMs' => intdiv(hrtime(true) - $started, 1000000),
-        'userId' => $userId,
-    ], JSON_UNESCAPED_SLASHES) . "\n");
-    return $response->withHeader('X-Request-Id', $requestId);
+    throw notFound();
 }
 
-$app = AppFactory::create();
+$routes = [
+    ['GET', '#^/health$#', function (): void {
+        $store = Store::load();
+        writeJson(200, ['status' => 'ok', 'projects' => count($store->projects),
+            'tasks' => count($store->tasks)]);
+    }],
 
-$app->add(fn (Request $request, RequestHandler $handler): Response
-    => observe($request, $handler, $app->getResponseFactory()));
-
-$app->get('/health', function (Request $request, Response $response): Response {
-    $store = Store::load();
-    return writeJson($response, 200, ['status' => 'ok', 'projects' => count($store->projects),
-        'tasks' => count($store->tasks)]);
-});
-
-$app->post('/auth/login', function (Request $request, Response $response): Response {
-    $store = Store::load();
-    $body = readBody($request);
-    $errors = [];
-    $username = readString($body, 'username', $errors, MAX_NAME_LENGTH, true);
-    $password = readString($body, 'password', $errors, MAX_NAME_LENGTH, true);
-    if ($errors !== []) {
-        throw invalid($errors);
-    }
-    foreach ($store->users as $candidate) {
-        if ($candidate->username === $username && $candidate->password === $password) {
-            $token = bin2hex(random_bytes(16));
-            $store->sessions[$token] = $candidate->id;
-            $store->save();
-            return writeJson($response, 200, ['token' => $token, 'userId' => $candidate->id,
-                'role' => $candidate->role]);
+    ['POST', '#^/auth/login$#', function (): void {
+        $store = Store::load();
+        $body = readBody();
+        $errors = [];
+        $username = readString($body, 'username', $errors, MAX_NAME_LENGTH, true);
+        $password = readString($body, 'password', $errors, MAX_NAME_LENGTH, true);
+        if ($errors !== []) {
+            throw invalid($errors);
         }
-    }
-    throw new AppError(401, 'invalid_credentials', 'the username or password is wrong');
-});
-
-$app->post('/auth/logout', function (Request $request, Response $response): Response {
-    $store = Store::load();
-    authenticate($store, $request);
-    unset($store->sessions[substr($request->getHeaderLine('Authorization'), 7)]);
-    $store->save();
-    return $response->withStatus(204);
-});
-
-$app->get('/me', function (Request $request, Response $response): Response {
-    $store = Store::load();
-    $user = authenticate($store, $request);
-    return writeJson($response, 200, ['userId' => $user->id, 'username' => $user->username,
-        'role' => $user->role]);
-});
-
-$app->get('/projects', function (Request $request, Response $response): Response {
-    $store = Store::load();
-    $user = authenticate($store, $request);
-    [$limit, $offset, $sort, $order] = readPage($request, PROJECT_SORTS);
-    $rows = [];
-    foreach ($store->projects as $project) {
-        if ($user->role === 'admin' || $project->ownerId === $user->id) {
-            $rows[] = serializeProject($store, $project);
+        foreach ($store->users as $candidate) {
+            if ($candidate->username === $username && $candidate->password === $password) {
+                $token = bin2hex(random_bytes(16));
+                $store->sessions[$token] = $candidate->id;
+                $store->save();
+                writeJson(200, ['token' => $token, 'userId' => $candidate->id,
+                    'role' => $candidate->role]);
+                return;
+            }
         }
-    }
-    return writeJson($response, 200, paginate($rows, $limit, $offset, $sort, $order));
-});
+        throw new AppError(401, 'invalid_credentials', 'the username or password is wrong');
+    }],
 
-$app->post('/projects', function (Request $request, Response $response): Response {
-    $store = Store::load();
-    $user = authenticate($store, $request);
-    requireAdmin($user);
-    $body = readBody($request);
-    $errors = [];
-    $name = readString($body, 'name', $errors, MAX_NAME_LENGTH, true);
-    $ownerId = readUserRef($store, $body, 'ownerId', $errors, $user->id);
-    if ($errors !== []) {
-        throw invalid($errors);
-    }
-    foreach ($store->projects as $other) {
-        if ($other->ownerId === $ownerId && $other->name === $name) {
-            throw conflict();
+    ['POST', '#^/auth/logout$#', function (): void {
+        $store = Store::load();
+        authenticate($store);
+        unset($store->sessions[substr($_SERVER['HTTP_AUTHORIZATION'], 7)]);
+        $store->save();
+        http_response_code(204);
+    }],
+
+    ['GET', '#^/me$#', function (): void {
+        $store = Store::load();
+        $user = authenticate($store);
+        writeJson(200, ['userId' => $user->id, 'username' => $user->username,
+            'role' => $user->role]);
+    }],
+
+    ['GET', '#^/projects$#', function (): void {
+        $store = Store::load();
+        $user = authenticate($store);
+        [$limit, $offset, $sort, $order] = readPage(PROJECT_SORTS);
+        $rows = [];
+        foreach ($store->projects as $project) {
+            if ($user->role === 'admin' || $project->ownerId === $user->id) {
+                $rows[] = serializeProject($store, $project);
+            }
         }
-    }
-    $project = new Project($store->nextProjectId, $name, (int) $ownerId);
-    $store->projects[$project->id] = $project;
-    $store->nextProjectId += 1;
-    $store->save();
-    return writeJson($response, 201, serializeProject($store, $project));
-});
+        writeJson(200, paginate($rows, $limit, $offset, $sort, $order));
+    }],
 
-$app->get('/projects/{id}', function (Request $request, Response $response,
-    array $args): Response {
-    $store = Store::load();
-    $user = authenticate($store, $request);
-    $project = reachableProject($store, parseId($args['id']), $user);
-    return writeJson($response, 200, serializeProject($store, $project));
-});
-
-$app->patch('/projects/{id}', function (Request $request, Response $response,
-    array $args): Response {
-    $store = Store::load();
-    $user = authenticate($store, $request);
-    requireAdmin($user);
-    $project = reachableProject($store, parseId($args['id']), $user);
-    $body = readBody($request);
-    if (array_key_exists('name', $body)) {
+    ['POST', '#^/projects$#', function (): void {
+        $store = Store::load();
+        $user = authenticate($store);
+        requireAdmin($user);
+        $body = readBody();
         $errors = [];
         $name = readString($body, 'name', $errors, MAX_NAME_LENGTH, true);
+        $ownerId = readUserRef($store, $body, 'ownerId', $errors, $user->id);
         if ($errors !== []) {
             throw invalid($errors);
         }
         foreach ($store->projects as $other) {
-            if ($other->ownerId === $project->ownerId && $other->name === $name
-                && $other->id !== $project->id) {
+            if ($other->ownerId === $ownerId && $other->name === $name) {
                 throw conflict();
             }
         }
-        $project->name = $name;
+        $project = new Project($store->nextProjectId, $name, (int) $ownerId);
+        $store->projects[$project->id] = $project;
+        $store->nextProjectId += 1;
         $store->save();
-    }
-    return writeJson($response, 200, serializeProject($store, $project));
-});
+        writeJson(201, serializeProject($store, $project));
+    }],
 
-$app->delete('/projects/{id}', function (Request $request, Response $response,
-    array $args): Response {
-    $store = Store::load();
-    $user = authenticate($store, $request);
-    requireAdmin($user);
-    $project = reachableProject($store, parseId($args['id']), $user);
-    foreach ($store->tasks as $task) {
-        if ($task->projectId === $project->id) {
-            unset($store->tasks[$task->id]);
+    ['GET', '#^/projects/([^/]+)$#', function (string $id): void {
+        $store = Store::load();
+        $user = authenticate($store);
+        $project = reachableProject($store, parseId($id), $user);
+        writeJson(200, serializeProject($store, $project));
+    }],
+
+    ['PATCH', '#^/projects/([^/]+)$#', function (string $id): void {
+        $store = Store::load();
+        $user = authenticate($store);
+        requireAdmin($user);
+        $project = reachableProject($store, parseId($id), $user);
+        $body = readBody();
+        if (array_key_exists('name', $body)) {
+            $errors = [];
+            $name = readString($body, 'name', $errors, MAX_NAME_LENGTH, true);
+            if ($errors !== []) {
+                throw invalid($errors);
+            }
+            foreach ($store->projects as $other) {
+                if ($other->ownerId === $project->ownerId && $other->name === $name
+                    && $other->id !== $project->id) {
+                    throw conflict();
+                }
+            }
+            $project->name = $name;
+            $store->save();
         }
-    }
-    unset($store->projects[$project->id]);
-    $store->save();
-    return $response->withStatus(204);
-});
+        writeJson(200, serializeProject($store, $project));
+    }],
 
-$app->get('/projects/{id}/tasks', function (Request $request, Response $response,
-    array $args): Response {
-    $store = Store::load();
-    $user = authenticate($store, $request);
-    $project = reachableProject($store, parseId($args['id']), $user);
-    [$limit, $offset, $sort, $order] = readPage($request, TASK_SORTS);
-    $rows = [];
-    foreach ($store->tasks as $task) {
-        if ($task->projectId === $project->id) {
-            $rows[] = serializeTask($task);
+    ['DELETE', '#^/projects/([^/]+)$#', function (string $id): void {
+        $store = Store::load();
+        $user = authenticate($store);
+        requireAdmin($user);
+        $project = reachableProject($store, parseId($id), $user);
+        foreach ($store->tasks as $task) {
+            if ($task->projectId === $project->id) {
+                unset($store->tasks[$task->id]);
+            }
         }
-    }
-    return writeJson($response, 200, paginate($rows, $limit, $offset, $sort, $order));
-});
+        unset($store->projects[$project->id]);
+        $store->save();
+        http_response_code(204);
+    }],
 
-$app->post('/projects/{id}/tasks', function (Request $request, Response $response,
-    array $args): Response {
-    $store = Store::load();
-    $user = authenticate($store, $request);
-    $project = reachableProject($store, parseId($args['id']), $user);
-    $body = readBody($request);
-    $errors = [];
-    $title = readString($body, 'title', $errors, MAX_TITLE_LENGTH, true);
-    $priority = readPriority($body, $errors);
-    $assigneeId = readUserRef($store, $body, 'assigneeId', $errors, null);
-    if ($errors !== []) {
-        throw invalid($errors);
-    }
-    $task = new Task($store->nextTaskId, $project->id, $title, $priority, 'todo', $assigneeId,
-        computeScore($priority, 'todo'));
-    $store->tasks[$task->id] = $task;
-    $store->nextTaskId += 1;
-    $store->save();
-    return writeJson($response, 201, serializeTask($task));
-});
-
-$app->get('/tasks/{id}', function (Request $request, Response $response, array $args): Response {
-    $store = Store::load();
-    $user = authenticate($store, $request);
-    return writeJson($response, 200, serializeTask(reachableTask($store, parseId($args['id']),
-        $user)));
-});
-
-$app->put('/tasks/{id}', function (Request $request, Response $response, array $args): Response {
-    $store = Store::load();
-    $user = authenticate($store, $request);
-    $task = reachableTask($store, parseId($args['id']), $user);
-    $body = readBody($request);
-    $errors = [];
-    $title = readString($body, 'title', $errors, MAX_TITLE_LENGTH, true);
-    $priority = readPriority($body, $errors);
-    $assigneeId = readUserRef($store, $body, 'assigneeId', $errors, null);
-    if ($errors !== []) {
-        throw invalid($errors);
-    }
-    $task->title = $title;
-    $task->priority = $priority;
-    $task->assigneeId = $assigneeId;
-    $task->score = computeScore($priority, $task->status);
-    $store->save();
-    return writeJson($response, 200, serializeTask($task));
-});
-
-$app->patch('/tasks/{id}/status', function (Request $request, Response $response,
-    array $args): Response {
-    $store = Store::load();
-    $user = authenticate($store, $request);
-    $task = reachableTask($store, parseId($args['id']), $user);
-    $body = readBody($request);
-    $status = $body['status'] ?? null;
-    if (!is_string($status) || !array_key_exists($status, STATUS_BONUS)) {
-        throw invalid([fail('status', 'status is not valid')]);
-    }
-    if (!in_array("{$task->status}->{$status}", TRANSITIONS, true)) {
-        throw new AppError(409, 'invalid_transition', 'the status change is not allowed');
-    }
-    $task->status = $status;
-    $task->score = computeScore($task->priority, $status);
-    $store->save();
-    return writeJson($response, 200, serializeTask($task));
-});
-
-$app->delete('/tasks/{id}', function (Request $request, Response $response,
-    array $args): Response {
-    $store = Store::load();
-    $user = authenticate($store, $request);
-    $task = reachableTask($store, parseId($args['id']), $user);
-    unset($store->tasks[$task->id]);
-    $store->save();
-    return $response->withStatus(204);
-});
-
-$app->get('/stats', function (Request $request, Response $response): Response {
-    $store = Store::load();
-    $user = authenticate($store, $request);
-    requireAdmin($user);
-    $byStatus = ['todo' => 0, 'in_progress' => 0, 'done' => 0, 'archived' => 0];
-    $sumScore = 0;
-    foreach ($store->tasks as $task) {
-        $byStatus[$task->status] += 1;
-        $sumScore += $task->score;
-    }
-    $total = count($store->tasks);
-    $best = null;
-    foreach ($store->projects as $project) {
-        if ($best === null || taskCount($store, $project->id) > taskCount($store, $best->id)) {
-            $best = $project;
+    ['GET', '#^/projects/([^/]+)/tasks$#', function (string $id): void {
+        $store = Store::load();
+        $user = authenticate($store);
+        $project = reachableProject($store, parseId($id), $user);
+        [$limit, $offset, $sort, $order] = readPage(TASK_SORTS);
+        $rows = [];
+        foreach ($store->tasks as $task) {
+            if ($task->projectId === $project->id) {
+                $rows[] = serializeTask($task);
+            }
         }
-    }
-    return writeJson($response, 200, [
-        'projects' => count($store->projects),
-        'tasks' => $total,
-        'users' => count($store->users),
-        'sessions' => count($store->sessions),
-        'byStatus' => $byStatus,
-        'avgScore' => $total === 0 ? 0.0 : round($sumScore / $total, 2),
-        'topProjectName' => $best === null ? null : $best->name,
-    ]);
-});
+        writeJson(200, paginate($rows, $limit, $offset, $sort, $order));
+    }],
 
-$app->any('/{path:.*}', function (Request $request, Response $response): Response {
-    throw notFound();
-});
+    ['POST', '#^/projects/([^/]+)/tasks$#', function (string $id): void {
+        $store = Store::load();
+        $user = authenticate($store);
+        $project = reachableProject($store, parseId($id), $user);
+        $body = readBody();
+        $errors = [];
+        $title = readString($body, 'title', $errors, MAX_TITLE_LENGTH, true);
+        $priority = readPriority($body, $errors);
+        $assigneeId = readUserRef($store, $body, 'assigneeId', $errors, null);
+        if ($errors !== []) {
+            throw invalid($errors);
+        }
+        $task = new Task($store->nextTaskId, $project->id, $title, $priority, 'todo', $assigneeId,
+            computeScore($priority, 'todo'));
+        $store->tasks[$task->id] = $task;
+        $store->nextTaskId += 1;
+        $store->save();
+        writeJson(201, serializeTask($task));
+    }],
 
-$app->run();
+    ['GET', '#^/tasks/([^/]+)$#', function (string $id): void {
+        $store = Store::load();
+        $user = authenticate($store);
+        writeJson(200, serializeTask(reachableTask($store, parseId($id), $user)));
+    }],
+
+    ['PUT', '#^/tasks/([^/]+)$#', function (string $id): void {
+        $store = Store::load();
+        $user = authenticate($store);
+        $task = reachableTask($store, parseId($id), $user);
+        $body = readBody();
+        $errors = [];
+        $title = readString($body, 'title', $errors, MAX_TITLE_LENGTH, true);
+        $priority = readPriority($body, $errors);
+        $assigneeId = readUserRef($store, $body, 'assigneeId', $errors, null);
+        if ($errors !== []) {
+            throw invalid($errors);
+        }
+        $task->title = $title;
+        $task->priority = $priority;
+        $task->assigneeId = $assigneeId;
+        $task->score = computeScore($priority, $task->status);
+        $store->save();
+        writeJson(200, serializeTask($task));
+    }],
+
+    ['PATCH', '#^/tasks/([^/]+)/status$#', function (string $id): void {
+        $store = Store::load();
+        $user = authenticate($store);
+        $task = reachableTask($store, parseId($id), $user);
+        $body = readBody();
+        $status = $body['status'] ?? null;
+        if (!is_string($status) || !array_key_exists($status, STATUS_BONUS)) {
+            throw invalid([fail('status', 'status is not valid')]);
+        }
+        if (!in_array("{$task->status}->{$status}", TRANSITIONS, true)) {
+            throw new AppError(409, 'invalid_transition', 'the status change is not allowed');
+        }
+        $task->status = $status;
+        $task->score = computeScore($task->priority, $status);
+        $store->save();
+        writeJson(200, serializeTask($task));
+    }],
+
+    ['DELETE', '#^/tasks/([^/]+)$#', function (string $id): void {
+        $store = Store::load();
+        $user = authenticate($store);
+        $task = reachableTask($store, parseId($id), $user);
+        unset($store->tasks[$task->id]);
+        $store->save();
+        http_response_code(204);
+    }],
+
+    ['GET', '#^/stats$#', function (): void {
+        $store = Store::load();
+        $user = authenticate($store);
+        requireAdmin($user);
+        $byStatus = ['todo' => 0, 'in_progress' => 0, 'done' => 0, 'archived' => 0];
+        $sumScore = 0;
+        foreach ($store->tasks as $task) {
+            $byStatus[$task->status] += 1;
+            $sumScore += $task->score;
+        }
+        $total = count($store->tasks);
+        $best = null;
+        foreach ($store->projects as $project) {
+            if ($best === null || taskCount($store, $project->id) > taskCount($store, $best->id)) {
+                $best = $project;
+            }
+        }
+        writeJson(200, [
+            'projects' => count($store->projects),
+            'tasks' => $total,
+            'users' => count($store->users),
+            'sessions' => count($store->sessions),
+            'byStatus' => $byStatus,
+            'avgScore' => $total === 0 ? 0.0 : round($sumScore / $total, 2),
+            'topProjectName' => $best === null ? null : $best->name,
+        ]);
+    }],
+];
+
+$method = $_SERVER['REQUEST_METHOD'];
+$path = explode('?', $_SERVER['REQUEST_URI'], 2)[0];
+$requestId = ($_SERVER['HTTP_X_REQUEST_ID'] ?? '') ?: bin2hex(random_bytes(6));
+$started = hrtime(true);
+header('X-Request-Id: ' . $requestId);
+
+try {
+    dispatch($routes, $method, $path);
+} catch (AppError $error) {
+    writeJson($error->status, ['error' => [
+        'code' => $error->code, 'message' => $error->message,
+        'requestId' => $requestId, 'details' => $error->details,
+    ]]);
+}
+
+$status = (int) http_response_code();
+file_put_contents('php://stdout', json_encode([
+    'level' => $status >= 500 ? 'error' : ($status >= 400 ? 'warn' : 'info'),
+    'requestId' => $requestId,
+    'method' => $method,
+    'path' => $path,
+    'status' => $status,
+    'durationMs' => intdiv(hrtime(true) - $started, 1000000),
+    'userId' => $userId,
+], JSON_UNESCAPED_SLASHES) . "\n");

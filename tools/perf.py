@@ -50,8 +50,7 @@ ROOT = Path(__file__).resolve().parent.parent
 JDK = Path(r"C:\Scoop\apps\temurin21-jdk\current")
 HOST, PORT = "127.0.0.1", 8080
 
-LANGUAGES = ["python", "typescript", "csharp", "go", "php", "php-bare", "java", "rust",
-             "zig", "c", "cpp"]
+LANGUAGES = ["python", "typescript", "csharp", "go", "php", "java", "rust", "zig", "c", "cpp"]
 TIER_DIR = {"small": "impl", "mid": "impl-mid", "large": "impl-large"}
 
 # A measured phase projected to run longer than this is skipped and recorded.
@@ -74,8 +73,6 @@ def launch(tier: str, language: str):
         "go": ([str(base / "taskservice.exe")], ROOT),
         "php": (["php", "-S", f"{HOST}:{PORT}", "-t", str(base / "public"),
                  str(base / "public" / "index.php")], ROOT),
-        "php-bare": (["php", "-S", f"{HOST}:{PORT}", "-t", str(base / "public"),
-                      str(base / "public" / "index.php")], ROOT),
         "java": ([str(JDK / "bin" / "java.exe"), "-jar",
                   str(base / "target" / "taskservice-0.1.0.jar")], ROOT),
         "rust": ([str(base / "target" / "release" / "taskservice.exe")], ROOT),

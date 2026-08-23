@@ -1,41 +1,24 @@
 <?php
-// Task Service, large tier — the Slim app: routing, middleware and the entry point.
+// Task Service, large tier — bare PHP: the front controller, its dispatch and middleware.
 
 declare(strict_types=1);
 
-require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/../src/Domain.php';
 require __DIR__ . '/../src/Store.php';
 require __DIR__ . '/../src/Service.php';
-
-use Psr\Http\Message\ResponseFactoryInterface;
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
-use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
-use Slim\Factory\AppFactory;
-use Slim\Routing\RouteContext;
 
 $store = null;
 $requestId = '';
 $userId = null;
 $quotaRemaining = null;
 $replayed = false;
+$rawBody = '';
 
 // ---------------------------------------------------------------------- helpers
 
-function writeJson(Response $response, int $status, mixed $body): Response
+function headerLine(string $name): string
 {
-    $response->getBody()->write((string) json_encode($body, JSON_UNESCAPED_SLASHES));
-    return $response->withHeader('Content-Type', 'application/json')->withStatus($status);
-}
-
-/** A single-resource body carries its version, so the ETag comes for free. */
-function responded(Response $response, int $status, array $body): Response
-{
-    $written = writeJson($response, $status, $body);
-    return isset($body['version'])
-        ? $written->withHeader('ETag', (string) $body['version'])
-        : $written;
+    return (string) ($_SERVER['HTTP_' . strtoupper(str_replace('-', '_', $name))] ?? '');
 }
 
 function envelope(AppError $error): array
@@ -50,10 +33,10 @@ function envelope(AppError $error): array
  *
  * @return array{Store, User, Session}
  */
-function begin(Request $request, bool $admin = false): array
+function begin(bool $admin = false): array
 {
     global $store, $userId, $quotaRemaining;
-    [$user, $session] = authenticate($store, $request->getHeaderLine('Authorization'));
+    [$user, $session] = authenticate($store, headerLine('Authorization'));
     $userId = $user->id;
     $quotaRemaining = chargeQuota($user, $session);
     if ($admin) {
@@ -62,9 +45,10 @@ function begin(Request $request, bool $admin = false): array
     return [$store, $user, $session];
 }
 
-function readBody(Request $request): array
+function readBody(): array
 {
-    $raw = trim((string) $request->getBody());
+    global $rawBody;
+    $raw = trim($rawBody);
     if ($raw === '') {
         return [];
     }
@@ -102,9 +86,9 @@ function parseId(string $raw): int
 }
 
 /** @return array{int, int, string, string} */
-function readPage(Request $request, array $allowed): array
+function readPage(array $allowed): array
 {
-    $query = $request->getQueryParams();
+    $query = $_GET;
     $errors = [];
     $limit = DEFAULT_LIMIT;
     $offset = 0;
@@ -134,26 +118,28 @@ function readPage(Request $request, array $allowed): array
     return [$limit, $offset, $sort, $order];
 }
 
-function ifMatch(Request $request, int $version): void
+function ifMatch(int $version): void
 {
-    checkIfMatch($request->getHeaderLine('If-Match'), $version);
+    checkIfMatch(headerLine('If-Match'), $version);
 }
 
-/** Run $produce once per Idempotency-Key, then replay the recorded outcome. */
-function idempotent(Request $request, Response $response, Session $session,
-    callable $produce): Response
+/**
+ * Run $produce once per Idempotency-Key, then replay the recorded outcome.
+ *
+ * @return array{int, array}
+ */
+function idempotent(Session $session, callable $produce): array
 {
     global $store, $replayed;
-    $key = $request->getHeaderLine('Idempotency-Key');
+    $key = headerLine('Idempotency-Key');
     if ($key === '') {
-        [$status, $body] = $produce();
-        return responded($response, $status, $body);
+        return $produce();
     }
     $slot = $session->token . "\n" . $key;
     if (isset($store->idempotency[$slot])) {
         $replayed = true;
         $record = $store->idempotency[$slot];
-        return responded($response, $record['status'], $record['body']);
+        return [$record['status'], $record['body']];
     }
     try {
         [$status, $body] = $produce();
@@ -162,13 +148,13 @@ function idempotent(Request $request, Response $response, Session $session,
         throw $error;
     }
     $store->idempotency[$slot] = ['status' => $status, 'body' => $body];
-    return responded($response, $status, $body);
+    return [$status, $body];
 }
 
 /** @param array<int, Task> $rows */
-function taskFilters(Request $request, array $rows): array
+function taskFilters(array $rows): array
 {
-    $query = $request->getQueryParams();
+    $query = $_GET;
     $errors = [];
     $status = $query['status'] ?? null;
     $assignee = $query['assigneeId'] ?? null;
@@ -218,73 +204,52 @@ function applyBulk(Store $store, User $actor, mixed $raw): array
     throw invalid([fail('op', 'op is not valid')]);
 }
 
-// ------------------------------------------------------------------- middleware
-
-function observe(Request $request, RequestHandler $handler,
-    ResponseFactoryInterface $factory): Response
+/**
+ * Walk the table in order and return the pattern that matched, so the metrics
+ * record `GET /projects/{id}` rather than `GET /projects/7`. A literal segment
+ * wins over `{id}`, which is why `/tasks/bulk` sits above `/tasks/{id}`.
+ *
+ * @return array{string, ?callable, array<string, string>}
+ */
+function matchRoute(array $routes, string $method, string $path): array
 {
-    global $store, $requestId, $userId, $quotaRemaining, $replayed;
-    $store = Store::load();
-    $requestId = $request->getHeaderLine('X-Request-Id') ?: bin2hex(random_bytes(6));
-    $userId = null;
-    $quotaRemaining = null;
-    $replayed = false;
-    $auditBefore = $store->auditCount;
-    $started = hrtime(true);
-    try {
-        $response = $handler->handle($request);
-    } catch (AppError $error) {
-        $response = writeJson($factory->createResponse(), $error->status, envelope($error));
-    } catch (Throwable $error) {
-        $response = writeJson($factory->createResponse(), 500,
-            envelope(new AppError(500, 'internal_error', $error->getMessage())));
+    $given = explode('/', trim($path, '/'));
+    foreach ($routes as [$verb, $pattern, $handler]) {
+        $wanted = explode('/', trim($pattern, '/'));
+        if ($verb !== $method || count($wanted) !== count($given)) {
+            continue;
+        }
+        $args = [];
+        foreach ($wanted as $index => $part) {
+            if ($part === '{id}') {
+                $args['id'] = $given[$index];
+            } elseif ($part !== $given[$index]) {
+                continue 2;
+            }
+        }
+        return [$pattern, $handler, $args];
     }
-    $status = $response->getStatusCode();
-    $route = $request->getAttribute(RouteContext::ROUTE);
-    $store->countRequest($request->getMethod() . ' '
-        . ($route === null ? 'unmatched' : $route->getPattern()), $status);
-    file_put_contents('php://stdout', json_encode([
-        'level' => $status >= 500 ? 'error' : ($status >= 400 ? 'warn' : 'info'),
-        'requestId' => $requestId,
-        'method' => $request->getMethod(),
-        'path' => $request->getUri()->getPath(),
-        'status' => $status,
-        'durationMs' => intdiv(hrtime(true) - $started, 1000000),
-        'userId' => $userId,
-        'quotaRemaining' => $quotaRemaining,
-        'auditSeq' => $store->auditCount - $auditBefore,
-    ], JSON_UNESCAPED_SLASHES) . "\n");
-    $store->save();
-    $response = $response->withHeader('X-Request-Id', $requestId);
-    if ($quotaRemaining !== null) {
-        $response = $response->withHeader('X-Quota-Remaining', (string) $quotaRemaining);
-    }
-    if ($replayed) {
-        $response = $response->withHeader('Idempotency-Replayed', 'true');
-    }
-    return $response;
+    return ['unmatched', null, []];
 }
 
-$app = AppFactory::create();
+// ------------------------------------------------------------------ the routes
 
-$app->add(fn (Request $request, RequestHandler $handler): Response
-    => observe($request, $handler, $app->getResponseFactory()));
-$app->addRoutingMiddleware();
+$routes = [
 
-// ------------------------------------------------------------------ health, auth
+// ------------------------------------------------------------- health and auth
 
-$app->get('/health', function (Request $request, Response $response): Response {
+['GET', '/health', function (): array {
     global $store;
-    return writeJson($response, 200, ['status' => 'ok',
+    return [200, ['status' => 'ok',
         'projects' => count(array_filter($store->projects,
             fn (Project $project) => !$project->deleted)),
         'tasks' => count(array_filter($store->tasks, fn (Task $task) => !$task->deleted)),
-        'comments' => count($store->comments)]);
-});
+        'comments' => count($store->comments)]];
+}],
 
-$app->post('/auth/login', function (Request $request, Response $response): Response {
+['POST', '/auth/login', function (): array {
     global $store;
-    $body = readBody($request);
+    $body = readBody();
     $errors = [];
     $username = text($body, 'username');
     $password = text($body, 'password');
@@ -299,184 +264,172 @@ $app->post('/auth/login', function (Request $request, Response $response): Respo
     }
     $token = bin2hex(random_bytes(16));
     $user = login($store, $username, $password, $token);
-    return writeJson($response, 200, ['token' => $token, 'userId' => $user->id,
-        'role' => $user->role]);
-});
+    return [200, ['token' => $token, 'userId' => $user->id, 'role' => $user->role]];
+}],
 
-$app->post('/auth/logout', function (Request $request, Response $response): Response {
-    [$store, $user, $session] = begin($request);
+['POST', '/auth/logout', function (): array {
+    [$store, $user, $session] = begin();
     unset($store->sessions[$session->token]);
-    return $response->withStatus(204);
-});
+    return [204, null];
+}],
 
-$app->get('/me', function (Request $request, Response $response): Response {
-    [$store, $user] = begin($request);
-    return writeJson($response, 200, ['userId' => $user->id, 'username' => $user->username,
-        'role' => $user->role]);
-});
+['GET', '/me', function (): array {
+    [$store, $user] = begin();
+    return [200, ['userId' => $user->id, 'username' => $user->username,
+        'role' => $user->role]];
+}],
 
-// ------------------------------------------------------------------------ users
+// ----------------------------------------------------------------------- users
 
-$app->get('/users', function (Request $request, Response $response): Response {
-    [$store] = begin($request, true);
-    [$limit, $offset, $sort, $order] = readPage($request, USER_SORTS);
+['GET', '/users', function (): array {
+    [$store] = begin(true);
+    [$limit, $offset, $sort, $order] = readPage(USER_SORTS);
     $rows = [];
     foreach ($store->users as $user) {
         if (!$user->deleted) {
             $rows[] = serializeUser($user);
         }
     }
-    return writeJson($response, 200, paginate($rows, $limit, $offset, $sort, $order));
-});
+    return [200, paginate($rows, $limit, $offset, $sort, $order)];
+}],
 
-$app->post('/users', function (Request $request, Response $response): Response {
-    [$store, $actor, $session] = begin($request, true);
-    $body = readBody($request);
-    return idempotent($request, $response, $session,
-        function () use ($store, $actor, $body): array {
-            $user = createUser($store, $actor, text($body, 'username'), text($body, 'password'),
-                $body['role'] ?? 'user', $body['quota'] ?? DEFAULT_QUOTA);
-            return [201, serializeUser($user)];
-        });
-});
+['POST', '/users', function (): array {
+    [$store, $actor, $session] = begin(true);
+    $body = readBody();
+    return idempotent($session, function () use ($store, $actor, $body): array {
+        $user = createUser($store, $actor, text($body, 'username'), text($body, 'password'),
+            $body['role'] ?? 'user', $body['quota'] ?? DEFAULT_QUOTA);
+        return [201, serializeUser($user)];
+    });
+}],
 
-$app->get('/users/{id}', function (Request $request, Response $response, array $args): Response {
-    [$store] = begin($request, true);
+['GET', '/users/{id}', function (array $args): array {
+    [$store] = begin(true);
     $user = $store->findUser(parseId($args['id']));
     if ($user === null) {
         throw notFound();
     }
-    return responded($response, 200, serializeUser($user));
-});
+    return [200, serializeUser($user)];
+}],
 
-$app->patch('/users/{id}', function (Request $request, Response $response,
-    array $args): Response {
-    [$store, $actor] = begin($request, true);
+['PATCH', '/users/{id}', function (array $args): array {
+    [$store, $actor] = begin(true);
     $user = $store->findUser(parseId($args['id']));
     if ($user === null) {
         throw notFound();
     }
-    ifMatch($request, $user->version);
-    updateUser($store, $actor, $user, readBody($request));
-    return responded($response, 200, serializeUser($user));
-});
+    ifMatch($user->version);
+    updateUser($store, $actor, $user, readBody());
+    return [200, serializeUser($user)];
+}],
 
-$app->delete('/users/{id}', function (Request $request, Response $response,
-    array $args): Response {
-    [$store, $actor] = begin($request, true);
+['DELETE', '/users/{id}', function (array $args): array {
+    [$store, $actor] = begin(true);
     $user = $store->findUser(parseId($args['id']));
     if ($user === null) {
         throw notFound();
     }
-    ifMatch($request, $user->version);
+    ifMatch($user->version);
     deleteUser($store, $actor, $user);
-    return responded($response, 200, serializeUser($user));
-});
+    return [200, serializeUser($user)];
+}],
 
-// --------------------------------------------------------------------- projects
+// -------------------------------------------------------------------- projects
 
-$app->get('/projects', function (Request $request, Response $response): Response {
-    [$store, $user] = begin($request);
-    $include = checkIncludeDeleted($request->getQueryParams()['includeDeleted'] ?? null, $user);
-    [$limit, $offset, $sort, $order] = readPage($request, PROJECT_SORTS);
+['GET', '/projects', function (): array {
+    [$store, $user] = begin();
+    $include = checkIncludeDeleted($_GET['includeDeleted'] ?? null, $user);
+    [$limit, $offset, $sort, $order] = readPage(PROJECT_SORTS);
     $rows = [];
     foreach (visibleProjects($store, $user, $include) as $project) {
         $rows[] = serializeProject($store, $project);
     }
-    return writeJson($response, 200, paginate($rows, $limit, $offset, $sort, $order));
-});
+    return [200, paginate($rows, $limit, $offset, $sort, $order)];
+}],
 
-$app->post('/projects', function (Request $request, Response $response): Response {
-    [$store, $actor, $session] = begin($request, true);
-    $body = readBody($request);
-    return idempotent($request, $response, $session,
-        function () use ($store, $actor, $body): array {
-            $project = createProject($store, $actor, text($body, 'name'),
-                whole($body, 'ownerId', $actor->id));
-            return [201, serializeProject($store, $project)];
-        });
-});
+['POST', '/projects', function (): array {
+    [$store, $actor, $session] = begin(true);
+    $body = readBody();
+    return idempotent($session, function () use ($store, $actor, $body): array {
+        $project = createProject($store, $actor, text($body, 'name'),
+            whole($body, 'ownerId', $actor->id));
+        return [201, serializeProject($store, $project)];
+    });
+}],
 
-$app->get('/projects/{id}', function (Request $request, Response $response,
-    array $args): Response {
-    [$store, $user] = begin($request);
+['GET', '/projects/{id}', function (array $args): array {
+    [$store, $user] = begin();
     $project = reachableProject($store, parseId($args['id']), $user);
-    return responded($response, 200, serializeProject($store, $project));
-});
+    return [200, serializeProject($store, $project)];
+}],
 
-$app->patch('/projects/{id}', function (Request $request, Response $response,
-    array $args): Response {
-    [$store, $actor] = begin($request, true);
+['PATCH', '/projects/{id}', function (array $args): array {
+    [$store, $actor] = begin(true);
     $project = reachableProject($store, parseId($args['id']), $actor);
-    ifMatch($request, $project->version);
-    $body = readBody($request);
+    ifMatch($project->version);
+    $body = readBody();
     if (array_key_exists('name', $body)) {
         renameProject($store, $actor, $project, text($body, 'name'));
     }
-    return responded($response, 200, serializeProject($store, $project));
-});
+    return [200, serializeProject($store, $project)];
+}],
 
-$app->delete('/projects/{id}', function (Request $request, Response $response,
-    array $args): Response {
-    [$store, $actor] = begin($request, true);
+['DELETE', '/projects/{id}', function (array $args): array {
+    [$store, $actor] = begin(true);
     $project = reachableProject($store, parseId($args['id']), $actor);
-    ifMatch($request, $project->version);
+    ifMatch($project->version);
     deleteProject($store, $actor, $project);
-    return responded($response, 200, serializeProject($store, $project));
-});
+    return [200, serializeProject($store, $project)];
+}],
 
-$app->post('/projects/{id}/restore', function (Request $request, Response $response,
-    array $args): Response {
-    [$store, $actor] = begin($request, true);
+['POST', '/projects/{id}/restore', function (array $args): array {
+    [$store, $actor] = begin(true);
     $project = reachableProject($store, parseId($args['id']), $actor, true);
-    ifMatch($request, $project->version);
+    ifMatch($project->version);
     restoreProject($store, $actor, $project);
-    return responded($response, 200, serializeProject($store, $project));
-});
+    return [200, serializeProject($store, $project)];
+}],
 
-// ------------------------------------------------------------------------ tasks
-
-$app->get('/tasks', function (Request $request, Response $response): Response {
-    [$store, $user] = begin($request);
-    $include = checkIncludeDeleted($request->getQueryParams()['includeDeleted'] ?? null, $user);
-    [$limit, $offset, $sort, $order] = readPage($request, TASK_SORTS);
-    $rows = [];
-    foreach (taskFilters($request, visibleTasks($store, $user, $include)) as $task) {
-        $rows[] = serializeTask($task, $user->role);
-    }
-    return writeJson($response, 200, paginate($rows, $limit, $offset, $sort, $order));
-});
-
-$app->get('/projects/{id}/tasks', function (Request $request, Response $response,
-    array $args): Response {
-    [$store, $user] = begin($request);
+['GET', '/projects/{id}/tasks', function (array $args): array {
+    [$store, $user] = begin();
     $project = reachableProject($store, parseId($args['id']), $user);
-    [$limit, $offset, $sort, $order] = readPage($request, TASK_SORTS);
+    [$limit, $offset, $sort, $order] = readPage(TASK_SORTS);
     $rows = [];
     foreach ($store->liveTasksOf($project->id) as $task) {
         $rows[] = serializeTask($task, $user->role);
     }
-    return writeJson($response, 200, paginate($rows, $limit, $offset, $sort, $order));
-});
+    return [200, paginate($rows, $limit, $offset, $sort, $order)];
+}],
 
-$app->post('/projects/{id}/tasks', function (Request $request, Response $response,
-    array $args): Response {
-    [$store, $actor, $session] = begin($request);
+['POST', '/projects/{id}/tasks', function (array $args): array {
+    [$store, $actor, $session] = begin();
     $project = reachableProject($store, parseId($args['id']), $actor);
-    $body = readBody($request);
-    return idempotent($request, $response, $session,
-        function () use ($store, $actor, $project, $body): array {
-            $errors = [];
-            $note = readNote($actor, $body, $errors, '');
-            $task = createTask($store, $actor, $project, text($body, 'title'),
-                whole($body, 'priority', 0), whole($body, 'assigneeId', null), $note, $errors);
-            return [201, serializeTask($task, $actor->role)];
-        });
-});
+    $body = readBody();
+    return idempotent($session, function () use ($store, $actor, $project, $body): array {
+        $errors = [];
+        $note = readNote($actor, $body, $errors, '');
+        $task = createTask($store, $actor, $project, text($body, 'title'),
+            whole($body, 'priority', 0), whole($body, 'assigneeId', null), $note, $errors);
+        return [201, serializeTask($task, $actor->role)];
+    });
+}],
 
-$app->post('/tasks/bulk', function (Request $request, Response $response): Response {
-    [$store, $actor] = begin($request);
-    $body = readBody($request);
+// ----------------------------------------------------------------------- tasks
+
+['GET', '/tasks', function (): array {
+    [$store, $user] = begin();
+    $include = checkIncludeDeleted($_GET['includeDeleted'] ?? null, $user);
+    [$limit, $offset, $sort, $order] = readPage(TASK_SORTS);
+    $rows = [];
+    foreach (taskFilters(visibleTasks($store, $user, $include)) as $task) {
+        $rows[] = serializeTask($task, $user->role);
+    }
+    return [200, paginate($rows, $limit, $offset, $sort, $order)];
+}],
+
+['POST', '/tasks/bulk', function (): array {
+    [$store, $actor] = begin();
+    $body = readBody();
     $operations = $body['operations'] ?? null;
     checkBulkSize($operations);
     $results = [];
@@ -488,119 +441,112 @@ $app->post('/tasks/bulk', function (Request $request, Response $response): Respo
                 'error' => $error->code];
         }
     }
-    return writeJson($response, 200, ['results' => $results]);
-});
+    return [200, ['results' => $results]];
+}],
 
-$app->get('/tasks/{id}', function (Request $request, Response $response, array $args): Response {
-    [$store, $user] = begin($request);
+['GET', '/tasks/{id}', function (array $args): array {
+    [$store, $user] = begin();
     $task = reachableTask($store, parseId($args['id']), $user);
-    return responded($response, 200, serializeTask($task, $user->role));
-});
+    return [200, serializeTask($task, $user->role)];
+}],
 
-$app->put('/tasks/{id}', function (Request $request, Response $response, array $args): Response {
-    [$store, $actor] = begin($request);
+['PUT', '/tasks/{id}', function (array $args): array {
+    [$store, $actor] = begin();
     $task = reachableTask($store, parseId($args['id']), $actor);
-    ifMatch($request, $task->version);
-    $body = readBody($request);
+    ifMatch($task->version);
+    $body = readBody();
     $errors = [];
     $note = readNote($actor, $body, $errors, $task->internalNote);
     replaceTask($store, $actor, $task, text($body, 'title'), whole($body, 'priority', 0),
         whole($body, 'assigneeId', null), $note, $errors);
-    return responded($response, 200, serializeTask($task, $actor->role));
-});
+    return [200, serializeTask($task, $actor->role)];
+}],
 
-$app->patch('/tasks/{id}/status', function (Request $request, Response $response,
-    array $args): Response {
-    [$store, $actor] = begin($request);
+['PATCH', '/tasks/{id}/status', function (array $args): array {
+    [$store, $actor] = begin();
     $task = reachableTask($store, parseId($args['id']), $actor);
-    ifMatch($request, $task->version);
-    $body = readBody($request);
+    ifMatch($task->version);
+    $body = readBody();
     moveStatus($store, $actor, $task, $body['status'] ?? null);
-    return responded($response, 200, serializeTask($task, $actor->role));
-});
+    return [200, serializeTask($task, $actor->role)];
+}],
 
-$app->delete('/tasks/{id}', function (Request $request, Response $response,
-    array $args): Response {
-    [$store, $actor] = begin($request);
+['DELETE', '/tasks/{id}', function (array $args): array {
+    [$store, $actor] = begin();
     $task = reachableTask($store, parseId($args['id']), $actor);
-    ifMatch($request, $task->version);
+    ifMatch($task->version);
     deleteTask($store, $actor, $task);
-    return responded($response, 200, serializeTask($task, $actor->role));
-});
+    return [200, serializeTask($task, $actor->role)];
+}],
 
-$app->post('/tasks/{id}/restore', function (Request $request, Response $response,
-    array $args): Response {
-    [$store, $actor] = begin($request);
+['POST', '/tasks/{id}/restore', function (array $args): array {
+    [$store, $actor] = begin();
     $task = reachableTask($store, parseId($args['id']), $actor, true);
-    ifMatch($request, $task->version);
+    ifMatch($task->version);
     restoreTask($store, $actor, $task);
-    return responded($response, 200, serializeTask($task, $actor->role));
-});
+    return [200, serializeTask($task, $actor->role)];
+}],
 
-// --------------------------------------------------------------------- comments
+// -------------------------------------------------------------------- comments
 
-$app->get('/tasks/{id}/comments', function (Request $request, Response $response,
-    array $args): Response {
-    [$store, $user] = begin($request);
+['GET', '/tasks/{id}/comments', function (array $args): array {
+    [$store, $user] = begin();
     $task = reachableTask($store, parseId($args['id']), $user);
-    [$limit, $offset, $sort, $order] = readPage($request, COMMENT_SORTS);
+    [$limit, $offset, $sort, $order] = readPage(COMMENT_SORTS);
     $rows = [];
     foreach ($store->comments as $comment) {
         if ($comment->taskId === $task->id) {
             $rows[] = serializeComment($comment);
         }
     }
-    return writeJson($response, 200, paginate($rows, $limit, $offset, $sort, $order));
-});
+    return [200, paginate($rows, $limit, $offset, $sort, $order)];
+}],
 
-$app->post('/tasks/{id}/comments', function (Request $request, Response $response,
-    array $args): Response {
-    [$store, $actor, $session] = begin($request);
+['POST', '/tasks/{id}/comments', function (array $args): array {
+    [$store, $actor, $session] = begin();
     $task = reachableTask($store, parseId($args['id']), $actor);
-    $body = readBody($request);
-    return idempotent($request, $response, $session,
-        function () use ($store, $actor, $task, $body): array {
-            $comment = createComment($store, $actor, $task, text($body, 'body'));
-            return [201, serializeComment($comment)];
-        });
-});
+    $body = readBody();
+    return idempotent($session, function () use ($store, $actor, $task, $body): array {
+        $comment = createComment($store, $actor, $task, text($body, 'body'));
+        return [201, serializeComment($comment)];
+    });
+}],
 
-$app->delete('/comments/{id}', function (Request $request, Response $response,
-    array $args): Response {
-    [$store, $actor] = begin($request);
+['DELETE', '/comments/{id}', function (array $args): array {
+    [$store, $actor] = begin();
     $comment = $store->findComment(parseId($args['id']));
     if ($comment === null) {
         throw notFound();
     }
     reachableTask($store, $comment->taskId, $actor, true);
     removeComment($store, $actor, $comment);
-    return $response->withStatus(204);
-});
+    return [204, null];
+}],
 
-// ---------------------------------------------------- search, reports, telemetry
+// --------------------------------------------------- search, reports, telemetry
 
-$app->get('/search', function (Request $request, Response $response): Response {
-    [$store, $user] = begin($request);
-    $query = $request->getQueryParams()['q'] ?? '';
+['GET', '/search', function (): array {
+    [$store, $user] = begin();
+    $query = $_GET['q'] ?? '';
     if (!is_string($query) || $query === '') {
         throw invalid([fail('q', 'q is required')]);
     }
-    return writeJson($response, 200, search($store, $user, $query));
-});
+    return [200, search($store, $user, $query)];
+}],
 
-$app->get('/reports/workload', function (Request $request, Response $response): Response {
-    [$store, $user] = begin($request);
-    $groupBy = $request->getQueryParams()['groupBy'] ?? 'status';
+['GET', '/reports/workload', function (): array {
+    [$store, $user] = begin();
+    $groupBy = $_GET['groupBy'] ?? 'status';
     if (!in_array($groupBy, GROUP_BYS, true)) {
         throw invalid([fail('groupBy', 'groupBy is not valid')]);
     }
-    return writeJson($response, 200, workload($store, $user, $groupBy));
-});
+    return [200, workload($store, $user, $groupBy)];
+}],
 
-$app->get('/audit', function (Request $request, Response $response): Response {
-    [$store] = begin($request, true);
-    [$limit, $offset, $sort, $order] = readPage($request, SEQ_SORTS);
-    $query = $request->getQueryParams();
+['GET', '/audit', function (): array {
+    [$store] = begin(true);
+    [$limit, $offset, $sort, $order] = readPage(SEQ_SORTS);
+    $query = $_GET;
     $rows = [];
     foreach ($store->auditEntries() as $entry) {
         if ((!isset($query['actorId']) || (string) $entry->actorId === $query['actorId'])
@@ -609,39 +555,89 @@ $app->get('/audit', function (Request $request, Response $response): Response {
             $rows[] = serializeAudit($entry);
         }
     }
-    return writeJson($response, 200, paginate($rows, $limit, $offset, $sort, $order));
-});
+    return [200, paginate($rows, $limit, $offset, $sort, $order)];
+}],
 
-$app->get('/outbox', function (Request $request, Response $response): Response {
-    [$store] = begin($request, true);
-    [$limit, $offset, $sort, $order] = readPage($request, SEQ_SORTS);
-    $wanted = $request->getQueryParams()['delivered'] ?? null;
+['GET', '/outbox', function (): array {
+    [$store] = begin(true);
+    [$limit, $offset, $sort, $order] = readPage(SEQ_SORTS);
+    $wanted = $_GET['delivered'] ?? null;
     $rows = [];
     foreach ($store->outboxEvents() as $event) {
         if ($wanted === null || $event->delivered === ($wanted === 'true')) {
             $rows[] = serializeOutbox($event);
         }
     }
-    return writeJson($response, 200, paginate($rows, $limit, $offset, $sort, $order));
-});
+    return [200, paginate($rows, $limit, $offset, $sort, $order)];
+}],
 
-$app->post('/outbox/flush', function (Request $request, Response $response): Response {
-    [$store] = begin($request, true);
-    return writeJson($response, 200, ['flushed' => flushOutbox($store)]);
-});
+['POST', '/outbox/flush', function (): array {
+    [$store] = begin(true);
+    return [200, ['flushed' => flushOutbox($store)]];
+}],
 
-$app->get('/metrics', function (Request $request, Response $response): Response {
-    [$store] = begin($request, true);
-    return writeJson($response, 200, metrics($store));
-});
+['GET', '/metrics', function (): array {
+    [$store] = begin(true);
+    return [200, metrics($store)];
+}],
 
-$app->get('/stats', function (Request $request, Response $response): Response {
-    [$store] = begin($request, true);
-    return writeJson($response, 200, stats($store));
-});
+['GET', '/stats', function (): array {
+    [$store] = begin(true);
+    return [200, stats($store)];
+}],
 
-$app->any('/{path:.*}', function (Request $request, Response $response): Response {
-    throw notFound();
-});
+];
 
-$app->run();
+// ---------------------------------------------------------------- the dispatch
+
+$store = Store::load();
+$requestId = headerLine('X-Request-Id') ?: bin2hex(random_bytes(6));
+$rawBody = (string) file_get_contents('php://input');
+$method = (string) $_SERVER['REQUEST_METHOD'];
+$path = explode('?', (string) $_SERVER['REQUEST_URI'], 2)[0];
+$auditBefore = $store->auditCount;
+$started = hrtime(true);
+[$route, $handler, $args] = matchRoute($routes, $method, $path);
+try {
+    if ($handler === null) {
+        throw notFound();
+    }
+    [$status, $body] = $handler($args);
+} catch (AppError $error) {
+    [$status, $body] = [$error->status, envelope($error)];
+} catch (Throwable $error) {
+    [$status, $body] = [500,
+        envelope(new AppError(500, 'internal_error', $error->getMessage()))];
+}
+
+$store->countRequest("$method $route", $status);
+file_put_contents('php://stdout', json_encode([
+    'level' => $status >= 500 ? 'error' : ($status >= 400 ? 'warn' : 'info'),
+    'requestId' => $requestId,
+    'method' => $method,
+    'path' => $path,
+    'status' => $status,
+    'durationMs' => intdiv(hrtime(true) - $started, 1000000),
+    'userId' => $userId,
+    'quotaRemaining' => $quotaRemaining,
+    'auditSeq' => $store->auditCount - $auditBefore,
+], JSON_UNESCAPED_SLASHES) . "\n");
+$store->save();
+
+// Every header goes out before the first byte of the body, so build then send.
+http_response_code($status);
+header('X-Request-Id: ' . $requestId);
+if ($quotaRemaining !== null) {
+    header('X-Quota-Remaining: ' . $quotaRemaining);
+}
+if ($replayed) {
+    header('Idempotency-Replayed: true');
+}
+if ($body !== null) {
+    // A single-resource body carries its version, so the ETag comes for free.
+    if (isset($body['version'])) {
+        header('ETag: ' . $body['version']);
+    }
+    header('Content-Type: application/json');
+    echo json_encode($body, JSON_UNESCAPED_SLASHES);
+}

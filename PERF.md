@@ -1,4 +1,4 @@
-# Runtime benchmark — 99 measurements
+# Runtime benchmark — 90 measurements
 
 Sequential client, one request at a time. Counts measured: 100, 1000, 10000. Detail tables below use 10000 requests.
 
@@ -17,8 +17,7 @@ Milliseconds from process spawn to the first successful `GET /health`. The probe
 | Zig | 60 ms | 70 ms | 59 ms | 1.8 ms | **57 ms** |
 | C++ | 58 ms | 72 ms | 75 ms | 13.4 ms | **58 ms** |
 | Rust | 71 ms | 71 ms | 72 ms | 2.4 ms | **69 ms** |
-| PHP bare | 167 ms | 180 ms | 182 ms | 2.8 ms | **166 ms** |
-| PHP + Slim | 198 ms | 175 ms | 251 ms | 13.4 ms | **182 ms** |
+| PHP | 167 ms | 180 ms | 182 ms | 2.8 ms | **166 ms** |
 | TypeScript | 463 ms | 452 ms | 465 ms | 3.3 ms | **452 ms** |
 | C# | 962 ms | 722 ms | 455 ms | 10.5 ms | **712 ms** |
 | Python | 868 ms | 1230 ms | 1027 ms | 14.8 ms | **1012 ms** |
@@ -37,8 +36,7 @@ Milliseconds from process spawn to the first successful `GET /health`. The probe
 | TypeScript | **0.426** | 0.589 | 0.969 | 17.5 | 75.9 | 1014 |
 | Java | **0.583** | 1.199 | 1.439 | 18.7 | 85.2 | 687 |
 | Python | **1.256** | 3.190 | 3.321 | 49.6 | 110.7 | 299 |
-| PHP bare | **1.362** | 22.102 | 6.506 | 55.2 | 98.4 | 153 |
-| PHP + Slim | **6.102** | 34.925 | 15.195 | 67.4 | 100.2 | 66 |
+| PHP | **1.362** | 22.102 | 6.506 | 55.2 | 98.4 | 153 |
 
 ## mid tier — latency and throughput at 10000 requests
 
@@ -53,8 +51,7 @@ Milliseconds from process spawn to the first successful `GET /health`. The probe
 | TypeScript | **0.428** | 0.571 | 0.773 | 13.4 | 72.2 | 1269 |
 | Java | **0.568** | 1.049 | 1.176 | 16.3 | 66.9 | 838 |
 | Python | **1.397** | 2.170 | 2.232 | 13.0 | 65.9 | 445 |
-| PHP bare | **1.452** | 22.883 | 6.825 | 58.8 | 114.4 | 146 |
-| PHP + Slim | **6.306** | 33.542 | 15.462 | 71.9 | 117.6 | 64 |
+| PHP | **1.452** | 22.883 | 6.825 | 58.8 | 114.4 | 146 |
 
 ## large tier — latency and throughput at 10000 requests
 
@@ -69,8 +66,7 @@ Milliseconds from process spawn to the first successful `GET /health`. The probe
 | C# | **0.444** | 0.645 | 1.157 | 18.7 | 69.9 | 850 |
 | Java | **0.595** | 1.141 | 1.296 | 16.8 | 77.4 | 760 |
 | Python | **1.621** | 4.360 | 3.743 | 50.4 | 72.7 | 266 |
-| PHP bare | **8.636** | 37.014 | 16.105 | 70.0 | 110.2 | 62 |
-| PHP + Slim | **17.588** | 43.159 | 22.194 | 77.8 | 115.8 | 45 |
+| PHP | **8.636** | 37.014 | 16.105 | 70.0 | 110.2 | 62 |
 
 ## small tier — CPU and memory at 10000 requests
 
@@ -81,8 +77,7 @@ Milliseconds from process spawn to the first successful `GET /health`. The probe
 | C++ | 0.045 | **4.2 MB** | 4.3 MB |
 | Rust | 0.097 | **5.8 MB** | 6.0 MB |
 | Go | 0.169 | **8.3 MB** | 15.2 MB |
-| PHP bare | 0.736 | **33.5 MB** | 34.2 MB |
-| PHP + Slim | 4.770 | **35.5 MB** | 36.0 MB |
+| PHP | 0.736 | **33.5 MB** | 34.2 MB |
 | C# | 0.701 | **47.9 MB** | 64.8 MB |
 | Python | 1.254 | **48.3 MB** | 48.5 MB |
 | TypeScript | 0.297 | **65.2 MB** | 71.5 MB |
@@ -97,8 +92,7 @@ Milliseconds from process spawn to the first successful `GET /health`. The probe
 | C++ | 0.075 | **5.1 MB** | 5.2 MB |
 | Rust | 0.105 | **6.0 MB** | 6.3 MB |
 | Go | 0.186 | **8.4 MB** | 15.5 MB |
-| PHP bare | 0.901 | **34.3 MB** | 34.7 MB |
-| PHP + Slim | 5.012 | **35.8 MB** | 36.3 MB |
+| PHP | 0.901 | **34.3 MB** | 34.7 MB |
 | C# | 0.490 | **48.5 MB** | 63.9 MB |
 | Python | 1.455 | **49.2 MB** | 50.1 MB |
 | TypeScript | 0.297 | **66.1 MB** | 74.3 MB |
@@ -113,8 +107,7 @@ Milliseconds from process spawn to the first successful `GET /health`. The probe
 | C++ | 0.070 | **5.2 MB** | 6.0 MB |
 | Rust | 0.150 | **6.2 MB** | 7.5 MB |
 | Go | 0.230 | **8.6 MB** | 16.2 MB |
-| PHP bare | 5.097 | **34.5 MB** | 36.7 MB |
-| PHP + Slim | 9.355 | **36.2 MB** | 38.3 MB |
+| PHP | 5.097 | **34.5 MB** | 36.7 MB |
 | Python | 1.764 | **50.0 MB** | 52.4 MB |
 | C# | 0.653 | **50.9 MB** | 66.6 MB |
 | TypeScript | 0.356 | **67.0 MB** | 80.4 MB |
@@ -135,6 +128,5 @@ p50 milliseconds at each request count, large tier. A rising value means the imp
 | Python | 1.598 | 1.464 | 1.621 | 1.01x |
 | Go | 0.294 | 0.293 | 0.311 | 1.06x |
 | Zig | 0.238 | 0.269 | 0.254 | 1.06x |
-| PHP + Slim | 7.576 | 8.118 | 17.588 | **2.32x** |
-| PHP bare | 2.360 | 2.926 | 8.636 | **3.66x** |
+| PHP | 2.360 | 2.926 | 8.636 | **3.66x** |
 

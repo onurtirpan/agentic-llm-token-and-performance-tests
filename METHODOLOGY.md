@@ -263,10 +263,13 @@ explains both halves:
    indicative only, with roughly a factor of two of uncertainty.** The ordering
    among C, C++, Zig, Go and Rust on throughput is *not* established by this
    data. Their p50 ordering is.
-3. **PHP's p50 should be read as a band, not a point.** The published large-tier
-   figure of 31.57 ms sits above the 11.4–15.4 ms band measured at 1000
-   requests, because the large-tier store grows during a 10000-request run; the
-   direction is real, the exact value is not reproducible.
+3. **PHP repeats well, but its large-tier figure is load-dependent.** Three
+   repeat runs landed within 1.1% on p50 at the small tier, 0.6% at the mid tier
+   and 4.3% at the large tier, so PHP is among the most reproducible
+   implementations here — a millisecond of real work dwarfs a 15.6 ms scheduling
+   artifact that a sub-millisecond server cannot absorb. The large-tier figure of
+   8.64 ms is still specific to a 10000-request run, because the store grows
+   during it; at 100 requests the same code answers in 2.36 ms.
 
 Fixing this properly needs repeated runs with medians, a dedicated load
 generator, and a host with a tuned timer. That is a larger study than this one,
@@ -280,17 +283,19 @@ cold-start figures rather than having to infer it.
 
 ## 9a. Fairness corrections
 
-Two implementations were being handicapped by our own choices rather than by
-their language. Both were found by asking why a result looked worse than it
-should, and both were corrected before publication. The pre-correction dataset is
-kept as `perf-results-before-opcache.json` so the effect is auditable.
+Four separate handicaps were found — three on PHP, one shared by C and C++ — and
+every one of them was our choice, not a property of the language. Each was found
+by asking why a result looked worse than it should. All were corrected before
+publication, and the pre-correction datasets are kept as
+`perf-results-before-opcache.json`, `perf-results-before-keepalive.json` and
+`perf-variance/removed-slim-run*.json` so every effect stays auditable.
 
 ### PHP had OPcache switched off
 
 `php -S` runs under the CLI SAPI, and `opcache.enable_cli` defaults to `Off`.
-Every request was therefore recompiling all of Slim from source. No production
-PHP deployment runs that way. Enabling it roughly halved PHP's median latency at
-the mid tier, from 10.43 ms to 6.29 ms.
+Every request was therefore recompiling the whole application from source. No
+production PHP deployment runs that way. Enabling it roughly halved PHP's median
+latency at the mid tier, from 10.43 ms to 6.29 ms.
 
 Having fixed that, a layered probe was run to find where PHP's remaining time
 actually goes. Each row adds one layer, `GET` only, warm, with a fresh store:
@@ -309,17 +314,17 @@ requires. Every other language in this benchmark builds its router once at
 start-up and reuses it for the life of the process.
 
 Our file-backed store is *not* the main cost at normal size. It becomes the main
-cost only at the large tier under sustained load, where the audit trail and
-outbox grow and the whole store is re-serialized per request: PHP's p50 goes
-9.20 ms at 100 requests, 12.29 ms at 1000, 32.26 ms at 10000. That growth is a
-consequence of the specification forbidding a database combined with PHP being
-unable to hold memory between requests, and APCu was not available on this host.
-A production PHP service would keep an audit trail in a database and would not
-pay it.
+cost only at the large tier under sustained load, where soft-deleted rows
+accumulate and the whole store is re-serialized per request: with the framework
+and the O(n) store both removed, PHP's p50 still goes 2.36 ms at 100 requests,
+2.93 ms at 1000 and 8.64 ms at 10000. That residual growth is a consequence of
+the specification forbidding a database combined with PHP being unable to hold
+memory between requests, and APCu was not available on this host. A production
+PHP service would keep that state in a database and would not pay it.
 
-The honest summary: PHP's numbers here measure the shared-nothing execution
+The honest summary: PHP's remaining numbers measure the shared-nothing execution
 model, not the language. A persistent runtime — Swoole, RoadRunner, FrankenPHP —
-removes the per-request framework rebuild entirely, and is not tested here.
+removes per-request reconstruction entirely, and is not tested here.
 
 ### C and C++ were not using keep-alive
 
@@ -334,7 +339,7 @@ property of C or C++. All six C and C++ implementations were changed to honour
 the client's `Connection` header, reuse the socket, and carry a receive timeout
 so a single idle client cannot block a single-threaded accept loop.
 
-### PHP is measured twice, with and without a framework
+### PHP was being measured through a framework
 
 The layered probe above exposed an asymmetry in the rule "each language uses the
 framework a real team would pick".
@@ -350,30 +355,38 @@ world on every request, Slim's container, router and middleware stack cost
 **4.24 ms per request, every request** — a cost the other nine pay once at
 start-up or not at all.
 
-Measuring only Slim-PHP therefore charges PHP for a decision many PHP developers
-do not make, and reports it as if it were a property of the language. So PHP is
-implemented and measured **twice at every tier**:
+Measuring Slim-PHP therefore charged PHP for a decision many PHP developers do
+not make, and reported it as if it were a property of the language. **PHP is
+therefore measured with no framework at all**: no Composer, no vendor tree, no
+autoloader, just `impl*/php/public/index.php` plus its own source files. It
+matches routes itself and writes its own status codes and headers, and it passes
+the identical conformance suites.
 
-| Variant | Directory | Dependencies |
-| --- | --- | --- |
-| `php` | `impl*/php/` | Slim 4 plus slim/psr7, via composer |
-| `php-bare` | `impl*/php-bare/` | none at all — no composer, no vendor, no autoloader |
+It keeps the same file-backed `Store` as before, because PHP's inability to hold
+state between requests is a genuine property of the execution model and is not
+the thing under test here.
 
-Both pass the identical conformance suites. Both keep the same file-backed
-`Store`, because PHP's inability to hold state between requests is a genuine
-property of the execution model and is not the thing under test here. Only the
-HTTP layer differs: `php-bare` matches routes itself and writes its own status
-codes and headers.
+Both variants were measured before the framework one was dropped, which makes the
+framework's cost a measured quantity rather than an assertion:
 
-This makes PHP the one language in the benchmark measured both ways, which is
-useful beyond PHP: it is a direct measurement of what a framework costs in tokens
-and in latency, holding the language and the logic constant.
+| 10,000 requests | no framework | Slim 4 | difference |
+| --- | ---: | ---: | ---: |
+| small p50 | 1.362 ms | 6.102 ms | 4.5x |
+| mid p50 | 1.452 ms | 6.306 ms | 4.3x |
+| large p50 | 8.636 ms | 17.588 ms | 2.0x |
+| large CPU per request | 5.097 ms | 9.355 ms | 1.8x |
+| large tokens | 15,607 | 16,238 | 1.04x |
+
+The Slim runs are kept in `perf-variance/removed-slim-run*.json`, and the
+implementations themselves are recoverable from git history at commit
+`79a8266`. Holding the language and the logic constant, a framework cost about
+4.2 ms of latency per request and about 4% of the token count.
 
 ### PHP's store was accidentally O(n) per request
 
 A third PHP handicap, found by asking why the large tier was so much worse than
-the other two. With a **fresh** store, bare PHP answers `GET /health` at the
-large tier in **1.656 ms** — healthy, and in the same range as Python. After a
+the other two. With a **fresh** store, PHP answers `GET /health` at the large
+tier in **1.656 ms** — healthy, and in the same range as Python. After a
 10,000-request run it had degraded to **25.2 ms**.
 
 A direct micro-benchmark of the store showed where that came from:
@@ -392,7 +405,7 @@ accumulated state) per request** for an operation every other language performs
 as an O(1) append to an in-memory list. That was a defect in how we chose to
 persist, not a property of PHP.
 
-The fix, applied to both PHP variants: `audit` and `outbox` moved to append-only
+The fix: `audit` and `outbox` moved to append-only
 JSON Lines files written with `FILE_APPEND` and never rewritten, with `auditCount`,
 `outboxCount` and `outboxDelivered` counters in `store.json` so `/stats` and
 `/metrics` stay O(1), and an `outboxFlushedThrough` watermark so
@@ -414,9 +427,9 @@ remain in `store.json` as live domain state that every implementation in the tie
 also holds. That part is legitimate and stays.
 
 The fix costs tokens: the large-tier `Store.php` grew from 219 to 335 lines, so
-bare PHP went from 14,391 to 15,607 tokens and from 1.36x to 1.48x, moving from
-fourth to fifth place at the large tier. O(1) persistence is more code than
-O(n) persistence, and the honest number is the one with the fix in.
+PHP went from 14,391 to 15,607 tokens and from 1.36x to 1.48x, moving from fourth
+to fifth place at the large tier. O(1) persistence is more code than O(n)
+persistence, and the honest number is the one with the fix in.
 
 **Three separate handicaps were found on PHP and all three were ours**: OPcache
 disabled, a framework rebuilt per request, and an O(n) store. Two of the three
@@ -437,12 +450,14 @@ language is given tuning flags another is denied.
 Stated bluntly, in rough order of importance.
 
 1. **Framework choice measures the ecosystem, not just the language.** Every
-   implementation uses the framework a real team would pick. FastAPI and ASP.NET
-   Minimal API hide an HTTP parser, a JSON parser, a JSON writer and a socket
-   loop that C, C++ and Zig must write by hand. That gap is real and a team
-   feels it, but it is not a measurement of language syntax. A
+   implementation uses what a real team would pick for that language — which for
+   PHP means no framework, and for C, C++ and Zig means raw sockets. FastAPI and
+   ASP.NET Minimal API hide an HTTP parser, a JSON parser, a JSON writer and a
+   socket loop that C, C++ and Zig must write by hand. That gap is real and a
+   team feels it, but it is not a measurement of language syntax. A
    standard-library-only variant would compress the band substantially and is
-   not run here.
+   not run here. The one place this study does isolate the framework is PHP,
+   where both variants were measured before the framework one was dropped.
 2. **One workload shape.** A JSON-over-HTTP CRUD service with in-memory state.
    Nothing here speaks to numeric computing, streaming, concurrency-heavy work,
    or anything with a real database.

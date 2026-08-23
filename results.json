@@ -94,29 +94,6 @@
   {
     "tier": "small",
     "language": "php",
-    "framework": "Slim",
-    "source": {
-      "files": 1,
-      "lines": 236,
-      "codeLines": 205,
-      "characters": 7285,
-      "bytes": 7287,
-      "tokens": 1974,
-      "tokensCl100k": 1953
-    },
-    "manifest": {
-      "files": 1,
-      "lines": 11,
-      "codeLines": 11,
-      "characters": 176,
-      "bytes": 176,
-      "tokens": 71,
-      "tokensCl100k": 69
-    }
-  },
-  {
-    "tier": "small",
-    "language": "php-bare",
     "framework": "no framework",
     "source": {
       "files": 1,
@@ -347,29 +324,6 @@
   {
     "tier": "mid",
     "language": "php",
-    "framework": "Slim",
-    "source": {
-      "files": 1,
-      "lines": 639,
-      "codeLines": 566,
-      "characters": 21339,
-      "bytes": 21341,
-      "tokens": 5722,
-      "tokensCl100k": 5677
-    },
-    "manifest": {
-      "files": 1,
-      "lines": 11,
-      "codeLines": 11,
-      "characters": 180,
-      "bytes": 180,
-      "tokens": 72,
-      "tokensCl100k": 71
-    }
-  },
-  {
-    "tier": "mid",
-    "language": "php-bare",
     "framework": "no framework",
     "source": {
       "files": 1,
@@ -600,29 +554,6 @@
   {
     "tier": "large",
     "language": "php",
-    "framework": "Slim",
-    "source": {
-      "files": 4,
-      "lines": 1775,
-      "codeLines": 1495,
-      "characters": 61905,
-      "bytes": 61919,
-      "tokens": 16238,
-      "tokensCl100k": 16183
-    },
-    "manifest": {
-      "files": 1,
-      "lines": 11,
-      "codeLines": 11,
-      "characters": 182,
-      "bytes": 182,
-      "tokens": 72,
-      "tokensCl100k": 70
-    }
-  },
-  {
-    "tier": "large",
-    "language": "php-bare",
     "framework": "no framework",
     "source": {
       "files": 4,

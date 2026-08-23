@@ -1,7 +1,7 @@
 [
   {
     "tier": "small",
-    "language": "php-bare",
+    "language": "php",
     "count": 10000,
     "coldStartMs": 193.83,
     "probeFloorMs": 13.73,
@@ -39,7 +39,7 @@
   },
   {
     "tier": "mid",
-    "language": "php-bare",
+    "language": "php",
     "count": 10000,
     "coldStartMs": 239.98,
     "probeFloorMs": 13.894,
@@ -77,7 +77,7 @@
   },
   {
     "tier": "large",
-    "language": "php-bare",
+    "language": "php",
     "count": 10000,
     "coldStartMs": 168.53,
     "probeFloorMs": 3.74,

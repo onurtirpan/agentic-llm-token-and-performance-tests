@@ -1,13 +1,7 @@
 <?php
-// Task Service — Slim implementation.
+// Task Service — bare PHP implementation, no framework.
 
 declare(strict_types=1);
-
-require __DIR__ . '/../vendor/autoload.php';
-
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
-use Slim\Factory\AppFactory;
 
 const MAX_TITLE_LENGTH = 80;
 const MIN_PRIORITY = 1;
@@ -81,15 +75,16 @@ function validate(string $title, int $priority): ?string
     return null;
 }
 
-function writeJson(Response $response, int $status, mixed $body): Response
+function writeJson(int $status, mixed $body): void
 {
-    $response->getBody()->write((string) json_encode($body));
-    return $response->withHeader('Content-Type', 'application/json')->withStatus($status);
+    http_response_code($status);
+    header('Content-Type: application/json');
+    echo (string) json_encode($body);
 }
 
-function fail(Response $response, int $status, string $message): Response
+function fail(int $status, string $message): void
 {
-    return writeJson($response, $status, ['error' => $message]);
+    writeJson($status, ['error' => $message]);
 }
 
 function parseId(string $raw): ?int
@@ -98,9 +93,9 @@ function parseId(string $raw): ?int
 }
 
 /** @return array{title: string, priority: int, done: bool}|null */
-function readInput(Request $request): ?array
+function readInput(): ?array
 {
-    $raw = json_decode((string) $request->getBody(), true);
+    $raw = json_decode((string) file_get_contents('php://input'), true);
     if (!is_array($raw)) {
         return null;
     }
@@ -113,124 +108,140 @@ function readInput(Request $request): ?array
     return ['title' => $title, 'priority' => $priority, 'done' => $done];
 }
 
-$app = AppFactory::create();
+$routes = [
+    ['GET', '#^/health$#', function (): void {
+        $store = Store::load();
+        writeJson(200, ['status' => 'ok', 'count' => count($store->tasks)]);
+    }],
 
-$app->get('/health', function (Request $request, Response $response): Response {
-    $store = Store::load();
-    return writeJson($response, 200, ['status' => 'ok', 'count' => count($store->tasks)]);
-});
-
-$app->get('/tasks', function (Request $request, Response $response): Response {
-    $done = $request->getQueryParams()['done'] ?? null;
-    if ($done !== null && $done !== 'true' && $done !== 'false') {
-        return fail($response, 400, 'done must be true or false');
-    }
-    $store = Store::load();
-    $selected = array_values(array_filter(
-        $store->tasks,
-        fn (Task $task) => $done === null || $task->done === ($done === 'true')
-    ));
-    usort($selected, fn (Task $a, Task $b) => $b->score <=> $a->score ?: $a->id <=> $b->id);
-    return writeJson($response, 200, ['tasks' => $selected, 'total' => count($selected)]);
-});
-
-$app->get('/tasks/{id}', function (Request $request, Response $response, array $args): Response {
-    $taskId = parseId($args['id']);
-    if ($taskId === null) {
-        return fail($response, 400, 'invalid id');
-    }
-    $store = Store::load();
-    if (!isset($store->tasks[$taskId])) {
-        return fail($response, 404, 'task not found');
-    }
-    return writeJson($response, 200, $store->tasks[$taskId]);
-});
-
-$app->post('/tasks', function (Request $request, Response $response): Response {
-    $input = readInput($request);
-    if ($input === null) {
-        return fail($response, 400, 'invalid json');
-    }
-    $error = validate($input['title'], $input['priority']);
-    if ($error !== null) {
-        return fail($response, 400, $error);
-    }
-    $store = Store::load();
-    $task = new Task($store->nextId, $input['title'], $input['priority'], false,
-        computeScore($input['priority'], false));
-    $store->tasks[$task->id] = $task;
-    $store->nextId += 1;
-    $store->save();
-    return writeJson($response, 201, $task);
-});
-
-$app->put('/tasks/{id}', function (Request $request, Response $response, array $args): Response {
-    $taskId = parseId($args['id']);
-    if ($taskId === null) {
-        return fail($response, 400, 'invalid id');
-    }
-    $store = Store::load();
-    if (!isset($store->tasks[$taskId])) {
-        return fail($response, 404, 'task not found');
-    }
-    $input = readInput($request);
-    if ($input === null) {
-        return fail($response, 400, 'invalid json');
-    }
-    $error = validate($input['title'], $input['priority']);
-    if ($error !== null) {
-        return fail($response, 400, $error);
-    }
-    $task = $store->tasks[$taskId];
-    $task->title = $input['title'];
-    $task->priority = $input['priority'];
-    $task->done = $input['done'];
-    $task->score = computeScore($input['priority'], $input['done']);
-    $store->save();
-    return writeJson($response, 200, $task);
-});
-
-$app->delete('/tasks/{id}', function (Request $request, Response $response, array $args): Response {
-    $taskId = parseId($args['id']);
-    if ($taskId === null) {
-        return fail($response, 400, 'invalid id');
-    }
-    $store = Store::load();
-    if (!isset($store->tasks[$taskId])) {
-        return fail($response, 404, 'task not found');
-    }
-    unset($store->tasks[$taskId]);
-    $store->save();
-    return $response->withStatus(204);
-});
-
-$app->get('/stats', function (Request $request, Response $response): Response {
-    $store = Store::load();
-    $total = count($store->tasks);
-    $doneCount = 0;
-    $sumScore = 0;
-    $best = null;
-    foreach ($store->tasks as $task) {
-        if ($task->done) {
-            $doneCount += 1;
+    ['GET', '#^/tasks$#', function (): void {
+        $done = $_GET['done'] ?? null;
+        if ($done !== null && $done !== 'true' && $done !== 'false') {
+            fail(400, 'done must be true or false');
+            return;
         }
-        $sumScore += $task->score;
-        if (!$task->done && ($best === null || $task->priority > $best->priority)) {
-            $best = $task;
+        $store = Store::load();
+        $selected = array_values(array_filter(
+            $store->tasks,
+            fn (Task $task) => $done === null || $task->done === ($done === 'true')
+        ));
+        usort($selected, fn (Task $a, Task $b) => $b->score <=> $a->score ?: $a->id <=> $b->id);
+        writeJson(200, ['tasks' => $selected, 'total' => count($selected)]);
+    }],
+
+    ['GET', '#^/tasks/([^/]+)$#', function (string $id): void {
+        $taskId = parseId($id);
+        if ($taskId === null) {
+            fail(400, 'invalid id');
+            return;
         }
+        $store = Store::load();
+        if (!isset($store->tasks[$taskId])) {
+            fail(404, 'task not found');
+            return;
+        }
+        writeJson(200, $store->tasks[$taskId]);
+    }],
+
+    ['POST', '#^/tasks$#', function (): void {
+        $input = readInput();
+        if ($input === null) {
+            fail(400, 'invalid json');
+            return;
+        }
+        $error = validate($input['title'], $input['priority']);
+        if ($error !== null) {
+            fail(400, $error);
+            return;
+        }
+        $store = Store::load();
+        $task = new Task($store->nextId, $input['title'], $input['priority'], false,
+            computeScore($input['priority'], false));
+        $store->tasks[$task->id] = $task;
+        $store->nextId += 1;
+        $store->save();
+        writeJson(201, $task);
+    }],
+
+    ['PUT', '#^/tasks/([^/]+)$#', function (string $id): void {
+        $taskId = parseId($id);
+        if ($taskId === null) {
+            fail(400, 'invalid id');
+            return;
+        }
+        $store = Store::load();
+        if (!isset($store->tasks[$taskId])) {
+            fail(404, 'task not found');
+            return;
+        }
+        $input = readInput();
+        if ($input === null) {
+            fail(400, 'invalid json');
+            return;
+        }
+        $error = validate($input['title'], $input['priority']);
+        if ($error !== null) {
+            fail(400, $error);
+            return;
+        }
+        $task = $store->tasks[$taskId];
+        $task->title = $input['title'];
+        $task->priority = $input['priority'];
+        $task->done = $input['done'];
+        $task->score = computeScore($input['priority'], $input['done']);
+        $store->save();
+        writeJson(200, $task);
+    }],
+
+    ['DELETE', '#^/tasks/([^/]+)$#', function (string $id): void {
+        $taskId = parseId($id);
+        if ($taskId === null) {
+            fail(400, 'invalid id');
+            return;
+        }
+        $store = Store::load();
+        if (!isset($store->tasks[$taskId])) {
+            fail(404, 'task not found');
+            return;
+        }
+        unset($store->tasks[$taskId]);
+        $store->save();
+        http_response_code(204);
+    }],
+
+    ['GET', '#^/stats$#', function (): void {
+        $store = Store::load();
+        $total = count($store->tasks);
+        $doneCount = 0;
+        $sumScore = 0;
+        $best = null;
+        foreach ($store->tasks as $task) {
+            if ($task->done) {
+                $doneCount += 1;
+            }
+            $sumScore += $task->score;
+            if (!$task->done && ($best === null || $task->priority > $best->priority)) {
+                $best = $task;
+            }
+        }
+        $avgScore = $total === 0 ? 0.0 : round($sumScore / $total, 2);
+        writeJson(200, [
+            'total' => $total,
+            'doneCount' => $doneCount,
+            'openCount' => $total - $doneCount,
+            'avgScore' => $avgScore,
+            'topOpenTitle' => $best === null ? null : $best->title,
+        ]);
+    }],
+];
+
+$method = $_SERVER['REQUEST_METHOD'];
+$path = explode('?', $_SERVER['REQUEST_URI'], 2)[0];
+
+foreach ($routes as [$verb, $pattern, $handler]) {
+    if ($verb === $method && preg_match($pattern, $path, $match) === 1) {
+        $handler(...array_slice($match, 1));
+        return;
     }
-    $avgScore = $total === 0 ? 0.0 : round($sumScore / $total, 2);
-    return writeJson($response, 200, [
-        'total' => $total,
-        'doneCount' => $doneCount,
-        'openCount' => $total - $doneCount,
-        'avgScore' => $avgScore,
-        'topOpenTitle' => $best === null ? null : $best->title,
-    ]);
-});
-
-$app->any('/{path:.*}', function (Request $request, Response $response): Response {
-    return fail($response, 404, 'not found');
-});
-
-$app->run();
+}
+fail(404, 'not found');

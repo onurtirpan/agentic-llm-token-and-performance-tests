@@ -16,7 +16,7 @@ const OUTBOX_PATH = __DIR__ . '/../outbox.log';
  * and every id and seq counter. The used counter grows on every authenticated
  * request and the metrics counters grow on every request at all, so essentially no
  * request is a pure read. The api layer therefore calls save() once at the end of
- * the middleware instead of leaving it to each handler.
+ * the request instead of leaving it to each handler.
  *
  * The state sits in two kinds of file, because the tables are two shapes. Bounded
  * or edited-in-place rows stay in store.json, which every request decodes whole and

@@ -180,22 +180,22 @@
 <div class="page">
 
   <header>
-    <p class="eyebrow">Measured &middot; 21 August 2026 &middot; detailed version</p>
+    <p class="eyebrow">Measured &middot; 21&ndash;23 August 2026 &middot; detailed version</p>
     <h1>Ten Languages,<br>One API</h1>
     <hr class="rule">
-    <p class="big">Same API. Ten languages, eleven build — PHP done twice, with framework and
-      without. Three sizes. Thirty-three builds. All pass all tests. Then count tokens. Then
-      measure cold start, latency, throughput, CPU and RAM at 100, 1,000 and 10,000 requests.</p>
+    <p class="big">Same API. Ten languages. Three sizes. Thirty builds. All pass all tests. Then
+      count tokens. Then measure cold start, latency, throughput, CPU and RAM at 100, 1,000 and
+      10,000 requests.</p>
     <p class="big">This is the long version: every table, every tier, and every mistake we made
       and fixed. Short version at <code>docs/benchmark.html</code>.</p>
 
     <div class="stats">
-      <div class="stat"><b>33</b><span>builds</span></div>
+      <div class="stat"><b>30</b><span>builds</span></div>
       <div class="stat"><b>259</b><span>tests each</span></div>
-      <div class="stat"><b>99</b><span>perf runs</span></div>
-      <div class="stat"><b>32,623</b><span>source lines</span></div>
+      <div class="stat"><b>90</b><span>perf runs</span></div>
+      <div class="stat"><b>29,973</b><span>source lines</span></div>
       <div class="stat"><b>2.80&times;</b><span>token spread</span></div>
-      <div class="stat"><b>81&times;</b><span>speed spread</span></div>
+      <div class="stat"><b>40&times;</b><span>speed spread</span></div>
     </div>
   </header>
 
@@ -267,8 +267,8 @@
       </div>
     </div>
     <p class="say">Order of work each tier: spec first, test second, then one Python reference
-      driven to a full pass, then the other ten. Every build re-verified by hand, separate from
-      the report it came with. Result: <strong>33/33 pass 22 / 98 / 139</strong>, and all 22 mid
+      driven to a full pass, then the other nine. Every build re-verified by hand, separate from
+      the report it came with. Result: <strong>30/30 pass 22 / 98 / 139</strong>, and all 20 mid
       and large build pass the log check.</p>
   </section>
 
@@ -282,8 +282,8 @@
 
     <h4>Mistake 1 — PHP had OPcache off</h4>
     <p class="say"><code>php -S</code> run the CLI SAPI, where <code>opcache.enable_cli</code>
-      default <strong>Off</strong>. So PHP recompile all of Slim from source <em>every request</em>.
-      No production PHP run that way.</p>
+      default <strong>Off</strong>. So PHP recompile the whole app from source
+      <em>every request</em>. No production PHP run that way.</p>
 
     <h4>Mistake 2 — C and C++ had no keep-alive</h4>
     <p class="say">Both send <code>Connection: close</code> every response, so a new TCP handshake
@@ -321,7 +321,7 @@
 
     <h4>What we checked and left alone</h4>
     <p class="say">Everything else reviewed for the same kind of handicap and found fair: all
-      eleven run a single process with default framework setting, the compiled language all build
+      ten run a single process with default framework setting, the compiled language all build
       in standard release mode (<code>-O2</code>, <code>--release</code>,
       <code>ReleaseSafe</code>), and no language get a tuning flag another is denied.</p>
   </section>
@@ -353,17 +353,20 @@
       from scratch on every request. That is what shared-nothing require. Every other language
       here build its router one time at startup and keep it for the life of the process.</p>
 
-    <h4>So we built PHP a second time, with no framework at all</h4>
+    <h4>So we threw the framework away</h4>
     <div class="callout">
       <strong>In Go or Rust the framework is the floor. In PHP it is a choice.</strong>
       <p>You cannot serve HTTP in Go with less than <code>net/http</code>. PHP is a request
         handler by design, and one front controller on <code>$_SERVER['REQUEST_URI']</code> is
-        ordinary production PHP. Measuring only Slim charge PHP for a decision many PHP developer
+        ordinary production PHP. Measuring Slim charge PHP for a decision many PHP developer
         never make.</p>
-      <p>So <code>php-bare</code> exist at all three tier. Zero dependency — no composer, no
-        vendor, no autoloader. Same store, same identifier name, same logic. Pass the same
-        22 / 98 / 139 test. Only the HTTP layer differ. Both variant published side by side,
-        never merged.</p>
+      <p>So PHP here carry <strong>zero dependency</strong> at all three tier — no composer, no
+        vendor, no autoloader, just <code>public/index.php</code> and its own file. Same store,
+        same identifier name, same logic. Pass the same 22 / 98 / 139 test. Only the HTTP layer
+        differ from the old framework build.</p>
+      <p>We measured both way <em>before</em> we dropped the framework one, so the framework cost
+        below is a measured number, not a guess. The old run stay in
+        <code>perf-variance/removed-slim-run*.json</code>.</p>
     </div>
 
     <h4>Mistake 3: the store was O(n). Measured.</h4>
@@ -380,7 +383,7 @@
       </table>
     </div>
     <p class="say"><strong>File I/O was never the problem. JSON serialization was.</strong> With a
-      <em>fresh</em> store, bare PHP answer <code>GET /health</code> at the large tier in
+      <em>fresh</em> store, PHP answer <code>GET /health</code> at the large tier in
       <strong>1.656 ms</strong> — healthy, same range as Python. After a 10,000-request run it had
       degraded to 25.2 ms, because the audit trail and outbox grow and our store rewrote the whole
       dataset each time.</p>
@@ -400,10 +403,9 @@
         </tbody>
       </table>
     </div>
-    <p class="say">Flat. Large tier p50 drop <strong>25.2 &rarr; 8.6 ms</strong> for bare and
-      <strong>31.6 &rarr; 17.6 ms</strong> for Slim. Cost: <strong>+1,216 token</strong>, because
-      O(1) persistence is more code than O(n). That move bare PHP from 4th to 5th on large-tier
-      token. Honest trade, and every number here include it.</p>
+    <p class="say">Flat. Large tier p50 drop <strong>25.2 &rarr; 8.6 ms</strong>. Cost:
+      <strong>+1,216 token</strong>, because O(1) persistence is more code than O(n). That move PHP
+      from 4th to 5th on large-tier token. Honest trade, and every number here include it.</p>
     <p class="say">A mixed create-and-delete workload still drift after the fix, but that residue
       is <em>not</em> the audit trail: it soft-delete 1,000 task, and those row stay in
       <code>store.json</code> as live domain state that every build in the tier also hold. That
@@ -412,42 +414,50 @@
     <h4>Framework cost, language and logic held constant</h4>
     <div class="scroll">
       <table>
-        <thead><tr><th>10,000 request</th><th class="num">bare p50</th><th class="num">Slim p50</th>
-          <th class="num">bare faster</th><th class="num">bare CPU</th><th class="num">Slim CPU</th></tr></thead>
+        <thead><tr><th>10,000 request</th><th class="num">no framework</th>
+          <th class="num">with Slim 4</th><th class="num">gain</th></tr></thead>
         <tbody>
-          <tr><td class="name">small tier</td><td class="num win">1.362 ms</td>
-            <td class="num lose">6.102 ms</td><td class="num win">4.5&times;</td>
-            <td class="num win">0.736</td><td class="num lose">4.770</td></tr>
-          <tr><td class="name">mid tier</td><td class="num win">1.452 ms</td>
-            <td class="num lose">6.306 ms</td><td class="num win">4.3&times;</td>
-            <td class="num win">0.901</td><td class="num lose">5.012</td></tr>
-          <tr><td class="name">large tier</td><td class="num win">8.636 ms</td>
-            <td class="num lose">17.588 ms</td><td class="num win">2.0&times;</td>
-            <td class="num win">5.097</td><td class="num lose">9.355</td></tr>
+          <tr><td class="name">small tier p50</td><td class="num win">1.362 ms</td>
+            <td class="num lose">6.102 ms</td><td class="num win">4.5&times;</td></tr>
+          <tr><td class="name">mid tier p50</td><td class="num win">1.452 ms</td>
+            <td class="num lose">6.306 ms</td><td class="num win">4.3&times;</td></tr>
+          <tr><td class="name">large tier p50</td><td class="num win">8.636 ms</td>
+            <td class="num lose">17.588 ms</td><td class="num win">2.0&times;</td></tr>
+          <tr><td class="name">small CPU ms/req</td><td class="num win">0.736</td>
+            <td class="num lose">4.770</td><td class="num win">6.5&times;</td></tr>
+          <tr><td class="name">mid CPU ms/req</td><td class="num win">0.901</td>
+            <td class="num lose">5.012</td><td class="num win">5.6&times;</td></tr>
+          <tr><td class="name">large CPU ms/req</td><td class="num win">5.097</td>
+            <td class="num lose">9.355</td><td class="num win">1.8&times;</td></tr>
+          <tr><td class="name">large token</td><td class="num win">15,607</td>
+            <td class="num lose">16,238</td><td class="num win">1.04&times;</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="say">Bare PHP also cost <em>fewer</em> token: 15,607 against 16,238 at the large
+    <p class="say">No framework also cost <em>fewer</em> token: 15,607 against 16,238 at the large
       tier, plus zero manifest because there is no composer file. So Slim cost about 4.2 ms per
       request, roughly 4% more token, a manifest and a vendor tree — and nothing measured here got
-      better for it.</p>
+      better for it. That is why PHP is published with no framework.</p>
 
     <div class="callout warn">
-      <strong>PHP number are median of three run. The wobble was Slim, not PHP.</strong>
-      <p>Slim swing hard run to run. Small tier gave <strong>13.73, 6.07, 6.10 ms</strong>; mid
-        gave <strong>14.12, 6.31, 6.28 ms</strong>. Its Composer autoloader touch about a hundred
-        file per request and page-cache state decide the number.</p>
-      <p>Bare PHP gave <strong>1.36, 1.36, 1.38 ms</strong> and <strong>1.45, 1.46,
-        1.45 ms</strong> — variance under half a percent, one of the most reproducible build in
-        the whole benchmark. So the instability belonged to the framework, not the language. We
-        publish the median run, and <code>perf-variance/</code> hold all the raw repeat.</p>
+      <strong>PHP number are median of three run — and it hardly needed the median.</strong>
+      <p>PHP repeat tight: small tier gave <strong>1.362, 1.361, 1.376 ms</strong>, mid gave
+        <strong>1.452, 1.457, 1.448 ms</strong>, large gave <strong>8.418, 8.636,
+        8.779 ms</strong>. Spread 1.1%, 0.6%, 4.3%. One of the <em>most</em> reproducible build in
+        the whole benchmark, because a millisecond of real work swamp a 15.6 ms timer artifact that
+        a sub-millisecond server cannot absorb.</p>
+      <p>Worth saying because the old framework build swung <strong>13.73, 6.07, 6.10 ms</strong>
+        at small and <strong>14.12, 6.31, 6.28 ms</strong> at mid: its Composer autoloader touch
+        about a hundred file per request and page-cache state decide the number. So the instability
+        belonged to the framework, never the language. <code>perf-variance/</code> hold every raw
+        repeat, old build included.</p>
     </div>
 
     <p class="say"><strong>Honest summary.</strong> PHP is not a slow language. Three separate
       handicap were stacked on it and all three were ours. What remain after removing them is the
       shared-nothing execution model itself: PHP cannot hold state between request, and this
       benchmark forbid a database, so PHP must serialize something on every request while the
-      other ten keep everything in RAM for free. A persistent runtime — Swoole, RoadRunner,
+      other nine keep everything in RAM for free. A persistent runtime — Swoole, RoadRunner,
       FrankenPHP — remove that too. Not tested here.</p>
   </section>
 
@@ -477,15 +487,10 @@
         <span class="bar-row"><span class="tag">M</span><span class="track"><span class="bar m" style="--w:26.7"></span></span><span class="val">1.35&times;</span></span>
         <span class="bar-row"><span class="tag">L</span><span class="track"><span class="bar l" style="--w:27.3"></span></span><span class="val">1.38&times;</span></span>
       </span><span class="delta down">&minus;0.13</span></div>
-      <div class="pair"><span class="lang">PHP bare</span><span class="bars">
+      <div class="pair"><span class="lang">PHP</span><span class="bars">
         <span class="bar-row"><span class="tag">S</span><span class="track"><span class="bar s" style="--w:38.4"></span></span><span class="val">1.94&times;</span></span>
         <span class="bar-row"><span class="tag">M</span><span class="track"><span class="bar m" style="--w:28.7"></span></span><span class="val">1.45&times;</span></span>
         <span class="bar-row"><span class="tag">L</span><span class="track"><span class="bar l" style="--w:29.3"></span></span><span class="val">1.48&times;</span></span>
-      </span><span class="delta down">&minus;0.46</span></div>
-      <div class="pair"><span class="lang">PHP + Slim</span><span class="bars">
-        <span class="bar-row"><span class="tag">S</span><span class="track"><span class="bar s" style="--w:39.6"></span></span><span class="val">2.00&times;</span></span>
-        <span class="bar-row"><span class="tag">M</span><span class="track"><span class="bar m" style="--w:30.1"></span></span><span class="val">1.52&times;</span></span>
-        <span class="bar-row"><span class="tag">L</span><span class="track"><span class="bar l" style="--w:30.5"></span></span><span class="val">1.54&times;</span></span>
       </span><span class="delta down">&minus;0.46</span></div>
       <div class="pair"><span class="lang">Go</span><span class="bars">
         <span class="bar-row"><span class="tag">S</span><span class="track"><span class="bar s" style="--w:34.7"></span></span><span class="val">1.75&times;</span></span>
@@ -553,8 +558,7 @@
         <tr><td class="name">Java</td><td>Spring Boot</td><td class="num">172</td><td class="num">150</td><td class="num">7,007</td><td class="num">1,489</td><td class="num">1.51&times;</td><td class="num">1,405</td></tr>
         <tr><td class="name">Rust</td><td>Axum</td><td class="num">211</td><td class="num">192</td><td class="num">6,415</td><td class="num">1,637</td><td class="num">1.66&times;</td><td class="num">1,631</td></tr>
         <tr><td class="name">Go</td><td>net/http</td><td class="num">263</td><td class="num">236</td><td class="num">6,154</td><td class="num">1,722</td><td class="num">1.75&times;</td><td class="num">1,672</td></tr>
-        <tr><td class="name">PHP bare</td><td>no framework</td><td class="num">247</td><td class="num">219</td><td class="num">7,166</td><td class="num">1,911</td><td class="num">1.94&times;</td><td class="num">1,895</td></tr>
-        <tr><td class="name">PHP + Slim</td><td>Slim</td><td class="num">236</td><td class="num">205</td><td class="num">7,285</td><td class="num">1,974</td><td class="num">2.00&times;</td><td class="num">1,953</td></tr>
+        <tr><td class="name">PHP</td><td>no framework</td><td class="num">247</td><td class="num">219</td><td class="num">7,166</td><td class="num">1,911</td><td class="num">1.94&times;</td><td class="num">1,895</td></tr>
         <tr><td class="name">Zig</td><td>std.http</td><td class="num">211</td><td class="num">186</td><td class="num">7,596</td><td class="num">2,047</td><td class="num">2.08&times;</td><td class="num">2,038</td></tr>
         <tr><td class="name">C++</td><td>raw winsock</td><td class="num">456</td><td class="num">412</td><td class="num">16,158</td><td class="num">4,179</td><td class="num">4.24&times;</td><td class="num">4,178</td></tr>
         <tr><td class="name">C</td><td>raw winsock</td><td class="num">593</td><td class="num">545</td><td class="num">18,403</td><td class="num">4,981</td><td class="num lose">5.05&times;</td><td class="num">4,962</td></tr>
@@ -571,8 +575,7 @@
         <tr><td class="name">C#</td><td class="num">451</td><td class="num">397</td><td class="num">16,599</td><td class="num">4,054</td><td class="num">1.08&times;</td><td class="num">3,963</td></tr>
         <tr><td class="name">TypeScript</td><td class="num">513</td><td class="num">458</td><td class="num">16,362</td><td class="num">4,250</td><td class="num">1.13&times;</td><td class="num">4,216</td></tr>
         <tr><td class="name">Java</td><td class="num">550</td><td class="num">490</td><td class="num">23,652</td><td class="num">5,094</td><td class="num">1.35&times;</td><td class="num">4,842</td></tr>
-        <tr><td class="name">PHP bare</td><td class="num">625</td><td class="num">555</td><td class="num">20,450</td><td class="num">5,464</td><td class="num">1.45&times;</td><td class="num">5,433</td></tr>
-        <tr><td class="name">PHP + Slim</td><td class="num">639</td><td class="num">566</td><td class="num">21,339</td><td class="num">5,722</td><td class="num">1.52&times;</td><td class="num">5,677</td></tr>
+        <tr><td class="name">PHP</td><td class="num">625</td><td class="num">555</td><td class="num">20,450</td><td class="num">5,464</td><td class="num">1.45&times;</td><td class="num">5,433</td></tr>
         <tr><td class="name">Rust</td><td class="num">833</td><td class="num">778</td><td class="num">25,372</td><td class="num">6,484</td><td class="num">1.72&times;</td><td class="num">6,458</td></tr>
         <tr><td class="name">Go</td><td class="num">946</td><td class="num">877</td><td class="num">23,400</td><td class="num">6,589</td><td class="num">1.75&times;</td><td class="num">6,525</td></tr>
         <tr><td class="name">Zig</td><td class="num">692</td><td class="num">636</td><td class="num">26,120</td><td class="num">7,022</td><td class="num">1.87&times;</td><td class="num">6,986</td></tr>
@@ -591,8 +594,7 @@
         <tr><td class="name">TypeScript</td><td class="num">1,493</td><td class="num">1,296</td><td class="num">47,782</td><td class="num">11,874</td><td class="num">1.12&times;</td><td class="num">11,798</td></tr>
         <tr><td class="name">C#</td><td class="num">1,360</td><td class="num">1,156</td><td class="num">53,574</td><td class="num">12,180</td><td class="num">1.15&times;</td><td class="num">12,016</td></tr>
         <tr><td class="name">Java</td><td class="num">1,601</td><td class="num">1,394</td><td class="num">69,174</td><td class="num">14,521</td><td class="num">1.38&times;</td><td class="num">13,977</td></tr>
-        <tr><td class="name">PHP bare</td><td class="num">1,771</td><td class="num">1,478</td><td class="num">58,591</td><td class="num">15,607</td><td class="num">1.48&times;</td><td class="num">15,574</td></tr>
-        <tr><td class="name">PHP + Slim</td><td class="num">1,775</td><td class="num">1,495</td><td class="num">61,905</td><td class="num">16,238</td><td class="num">1.54&times;</td><td class="num">16,183</td></tr>
+        <tr><td class="name">PHP</td><td class="num">1,771</td><td class="num">1,478</td><td class="num">58,591</td><td class="num">15,607</td><td class="num">1.48&times;</td><td class="num">15,574</td></tr>
         <tr><td class="name">Go</td><td class="num">2,338</td><td class="num">2,099</td><td class="num">60,217</td><td class="num">16,518</td><td class="num">1.56&times;</td><td class="num">16,456</td></tr>
         <tr><td class="name">Rust</td><td class="num">2,147</td><td class="num">1,951</td><td class="num">69,348</td><td class="num">17,560</td><td class="num">1.66&times;</td><td class="num">17,534</td></tr>
         <tr><td class="name">Zig</td><td class="num">1,995</td><td class="num">1,787</td><td class="num">74,498</td><td class="num">19,418</td><td class="num">1.84&times;</td><td class="num">19,330</td></tr>
@@ -622,8 +624,7 @@
         <tr><td class="name">Go</td><td class="num">1,722</td><td class="num">6,589</td><td class="num">16,518</td><td class="num">3.83&times;</td><td class="num">9.59&times;</td></tr>
         <tr><td class="name">Zig</td><td class="num">2,047</td><td class="num">7,022</td><td class="num">19,418</td><td class="num">3.43&times;</td><td class="num">9.49&times;</td></tr>
         <tr><td class="name">TypeScript</td><td class="num">1,259</td><td class="num">4,250</td><td class="num">11,874</td><td class="num">3.38&times;</td><td class="num">9.43&times;</td></tr>
-        <tr><td class="name">PHP + Slim</td><td class="num">1,974</td><td class="num">5,722</td><td class="num">16,238</td><td class="num">2.90&times;</td><td class="num">8.23&times;</td></tr>
-        <tr><td class="name">PHP bare</td><td class="num">1,911</td><td class="num">5,464</td><td class="num">15,607</td><td class="num">2.86&times;</td><td class="num">8.17&times;</td></tr>
+        <tr><td class="name">PHP</td><td class="num">1,911</td><td class="num">5,464</td><td class="num">15,607</td><td class="num">2.86&times;</td><td class="num">8.17&times;</td></tr>
         <tr><td class="name">C</td><td class="num">4,981</td><td class="num">12,909</td><td class="num">29,532</td><td class="num">2.59&times;</td><td class="num">5.93&times;</td></tr>
         <tr><td class="name">C++</td><td class="num">4,179</td><td class="num">9,385</td><td class="num">21,254</td><td class="num">2.25&times;</td><td class="num">5.09&times;</td></tr>
       </tbody>
@@ -646,8 +647,7 @@
         <tr><td class="name">Zig</td><td class="num">60</td><td class="num">70</td><td class="num">59</td><td class="num">1.8</td><td class="num win">57 ms</td></tr>
         <tr><td class="name">C++</td><td class="num">58</td><td class="num">72</td><td class="num">75</td><td class="num">13.4</td><td class="num win">58 ms</td></tr>
         <tr><td class="name">Rust</td><td class="num">71</td><td class="num">71</td><td class="num">72</td><td class="num">2.4</td><td class="num win">69 ms</td></tr>
-        <tr><td class="name">PHP bare</td><td class="num">167</td><td class="num">180</td><td class="num">182</td><td class="num">2.8</td><td class="num">166 ms</td></tr>
-        <tr><td class="name">PHP + Slim</td><td class="num">198</td><td class="num">175</td><td class="num">251</td><td class="num">13.4</td><td class="num">182 ms</td></tr>
+        <tr><td class="name">PHP</td><td class="num">167</td><td class="num">180</td><td class="num">182</td><td class="num">2.8</td><td class="num">166 ms</td></tr>
         <tr><td class="name">TypeScript</td><td class="num">463</td><td class="num">452</td><td class="num">465</td><td class="num">3.3</td><td class="num">452 ms</td></tr>
         <tr><td class="name">C#</td><td class="num">962</td><td class="num">722</td><td class="num">455</td><td class="num">10.5</td><td class="num">712 ms</td></tr>
         <tr><td class="name">Python</td><td class="num">868</td><td class="num">1,230</td><td class="num">1,027</td><td class="num">14.8</td><td class="num">1,012 ms</td></tr>
@@ -683,8 +683,7 @@
         <tr><td class="name">TypeScript</td><td class="num">0.426</td><td class="num">0.589</td><td class="num">0.969</td><td class="num">17.5</td><td class="num">1,014</td></tr>
         <tr><td class="name">Java</td><td class="num">0.583</td><td class="num">1.199</td><td class="num">1.439</td><td class="num">18.7</td><td class="num">687</td></tr>
         <tr><td class="name">Python</td><td class="num">1.256</td><td class="num">3.190</td><td class="num">3.321</td><td class="num">49.6</td><td class="num">299</td></tr>
-        <tr><td class="name">PHP bare</td><td class="num">1.362</td><td class="num">22.102</td><td class="num">6.506</td><td class="num">55.2</td><td class="num">153</td></tr>
-        <tr><td class="name">PHP + Slim</td><td class="num lose">6.102</td><td class="num">34.925</td><td class="num">15.195</td><td class="num">67.4</td><td class="num lose">66</td></tr>
+        <tr><td class="name">PHP</td><td class="num">1.362</td><td class="num">22.102</td><td class="num">6.506</td><td class="num">55.2</td><td class="num">153</td></tr>
       </tbody>
     </table></div>
 
@@ -702,8 +701,7 @@
         <tr><td class="name">TypeScript</td><td class="num">0.428</td><td class="num">0.571</td><td class="num">0.773</td><td class="num">13.4</td><td class="num">1,269</td></tr>
         <tr><td class="name">Java</td><td class="num">0.568</td><td class="num">1.049</td><td class="num">1.176</td><td class="num">16.3</td><td class="num">838</td></tr>
         <tr><td class="name">Python</td><td class="num">1.397</td><td class="num">2.170</td><td class="num">2.232</td><td class="num">13.0</td><td class="num">445</td></tr>
-        <tr><td class="name">PHP bare</td><td class="num">1.452</td><td class="num">22.883</td><td class="num">6.825</td><td class="num">58.8</td><td class="num">146</td></tr>
-        <tr><td class="name">PHP + Slim</td><td class="num lose">6.306</td><td class="num">33.542</td><td class="num">15.462</td><td class="num">71.9</td><td class="num lose">64</td></tr>
+        <tr><td class="name">PHP</td><td class="num">1.452</td><td class="num">22.883</td><td class="num">6.825</td><td class="num">58.8</td><td class="num">146</td></tr>
       </tbody>
     </table></div>
 
@@ -721,8 +719,7 @@
         <tr><td class="name">C#</td><td class="num">0.444</td><td class="num">0.645</td><td class="num">1.157</td><td class="num">18.7</td><td class="num">850</td></tr>
         <tr><td class="name">Java</td><td class="num">0.595</td><td class="num">1.141</td><td class="num">1.296</td><td class="num">16.8</td><td class="num">760</td></tr>
         <tr><td class="name">Python</td><td class="num">1.621</td><td class="num">4.360</td><td class="num">3.743</td><td class="num">50.4</td><td class="num">266</td></tr>
-        <tr><td class="name">PHP bare</td><td class="num">8.636</td><td class="num">37.014</td><td class="num">16.105</td><td class="num">70.0</td><td class="num">62</td></tr>
-        <tr><td class="name">PHP + Slim</td><td class="num lose">17.588</td><td class="num">43.159</td><td class="num">22.194</td><td class="num">77.8</td><td class="num lose">45</td></tr>
+        <tr><td class="name">PHP</td><td class="num">8.636</td><td class="num">37.014</td><td class="num">16.105</td><td class="num">70.0</td><td class="num">62</td></tr>
       </tbody>
     </table></div>
   </section>
@@ -747,10 +744,9 @@
         <tr><td class="name">Go</td><td class="num">0.169</td><td class="num">8.3 MB</td><td class="num">15.2 MB</td></tr>
         <tr><td class="name">TypeScript</td><td class="num">0.297</td><td class="num">65.2 MB</td><td class="num">71.5 MB</td></tr>
         <tr><td class="name">C#</td><td class="num">0.701</td><td class="num">47.9 MB</td><td class="num">64.8 MB</td></tr>
-        <tr><td class="name">PHP bare</td><td class="num">0.736</td><td class="num">33.5 MB</td><td class="num">34.2 MB</td></tr>
+        <tr><td class="name">PHP</td><td class="num">0.736</td><td class="num">33.5 MB</td><td class="num">34.2 MB</td></tr>
         <tr><td class="name">Python</td><td class="num">1.254</td><td class="num">48.3 MB</td><td class="num">48.5 MB</td></tr>
         <tr><td class="name">Java</td><td class="num">1.692</td><td class="num lose">181.1 MB</td><td class="num">210.3 MB</td></tr>
-        <tr><td class="name">PHP + Slim</td><td class="num lose">4.770</td><td class="num">35.5 MB</td><td class="num">36.0 MB</td></tr>
       </tbody>
     </table></div>
 
@@ -766,10 +762,9 @@
         <tr><td class="name">Go</td><td class="num">0.186</td><td class="num">8.4 MB</td><td class="num">15.5 MB</td></tr>
         <tr><td class="name">TypeScript</td><td class="num">0.297</td><td class="num">66.1 MB</td><td class="num">74.3 MB</td></tr>
         <tr><td class="name">C#</td><td class="num">0.490</td><td class="num">48.5 MB</td><td class="num">63.9 MB</td></tr>
-        <tr><td class="name">PHP bare</td><td class="num">0.901</td><td class="num">34.3 MB</td><td class="num">34.7 MB</td></tr>
+        <tr><td class="name">PHP</td><td class="num">0.901</td><td class="num">34.3 MB</td><td class="num">34.7 MB</td></tr>
         <tr><td class="name">Python</td><td class="num">1.455</td><td class="num">49.2 MB</td><td class="num">50.1 MB</td></tr>
         <tr><td class="name">Java</td><td class="num">1.478</td><td class="num lose">185.5 MB</td><td class="num">204.6 MB</td></tr>
-        <tr><td class="name">PHP + Slim</td><td class="num lose">5.012</td><td class="num">35.8 MB</td><td class="num">36.3 MB</td></tr>
       </tbody>
     </table></div>
 
@@ -787,8 +782,7 @@
         <tr><td class="name">C#</td><td class="num">0.653</td><td class="num">50.9 MB</td><td class="num">66.6 MB</td><td class="num">15.4&times;</td></tr>
         <tr><td class="name">Java</td><td class="num">1.613</td><td class="num lose">191.0 MB</td><td class="num">204.1 MB</td><td class="num lose">57.9&times;</td></tr>
         <tr><td class="name">Python</td><td class="num">1.764</td><td class="num">50.0 MB</td><td class="num">52.4 MB</td><td class="num">15.2&times;</td></tr>
-        <tr><td class="name">PHP bare</td><td class="num">5.097</td><td class="num">34.5 MB</td><td class="num">36.7 MB</td><td class="num">10.5&times;</td></tr>
-        <tr><td class="name">PHP + Slim</td><td class="num lose">9.355</td><td class="num">36.2 MB</td><td class="num">38.3 MB</td><td class="num">11.0&times;</td></tr>
+        <tr><td class="name">PHP</td><td class="num">5.097</td><td class="num">34.5 MB</td><td class="num">36.7 MB</td><td class="num">10.5&times;</td></tr>
       </tbody>
     </table></div>
   </section>
@@ -812,16 +806,15 @@
         <tr><td class="name">Python</td><td class="num">1.598</td><td class="num">1.464</td><td class="num">1.621</td><td class="num">1.01&times;</td><td>flat</td></tr>
         <tr><td class="name">Go</td><td class="num">0.294</td><td class="num">0.293</td><td class="num">0.311</td><td class="num">1.06&times;</td><td>flat</td></tr>
         <tr><td class="name">Zig</td><td class="num">0.238</td><td class="num">0.269</td><td class="num">0.254</td><td class="num">1.06&times;</td><td>flat</td></tr>
-        <tr><td class="name">PHP + Slim</td><td class="num">7.576</td><td class="num">8.118</td><td class="num">17.588</td><td class="num lose">2.32&times;</td><td>soft-deleted row accumulate in the store</td></tr>
-        <tr><td class="name">PHP bare</td><td class="num">2.360</td><td class="num">2.926</td><td class="num">8.636</td><td class="num lose">3.66&times;</td><td>same cause; faster baseline so relative drift look worse</td></tr>
+        <tr><td class="name">PHP</td><td class="num">2.360</td><td class="num">2.926</td><td class="num">8.636</td><td class="num lose">3.66&times;</td><td>state accumulate on disk between request</td></tr>
       </tbody>
     </table></div>
-    <p class="say">The two PHP row are the only real degradation, and after the append-only store
-      fix the cause is no longer the audit trail — an isolated test of 2,000 audit-only write is
+    <p class="say">PHP is the only real degradation, and after the append-only store fix the cause
+      is no longer the audit trail — an isolated test of 2,000 audit-only write is
       <strong>flat at 1.00&times;</strong>. What remain is 1,000 soft-deleted task row living in
       <code>store.json</code> as domain state that every build in the tier also hold; PHP is just
-      the only one that has to re-serialize it. Absolute number both improved a lot: bare went
-      25.2 &rarr; 8.6 ms, Slim 31.6 &rarr; 17.6 ms.</p>
+      the only one that has to re-serialize it, because a shared-nothing process cannot keep it in
+      memory. The absolute number improved a lot with the fix: 25.2 &rarr; 8.6 ms.</p>
   </section>
 
   <section id="flip">
@@ -845,8 +838,7 @@
         <tr><td class="name">TypeScript</td><td class="num">1.12&times;</td><td class="num">2</td><td class="num">0.441</td><td class="num">6</td><td class="num">&minus;4</td><td>best mix, eat 67 MB</td></tr>
         <tr><td class="name">C#</td><td class="num">1.15&times;</td><td class="num">3</td><td class="num">0.444</td><td class="num">7</td><td class="num">&minus;4</td><td>dense code, mid speed</td></tr>
         <tr><td class="name">Java</td><td class="num">1.38&times;</td><td class="num">4</td><td class="num">0.595</td><td class="num">8</td><td class="num">&minus;4</td><td>JIT help later, 5 s start, 191 MB</td></tr>
-        <tr><td class="name">PHP bare</td><td class="num">1.48&times;</td><td class="num">5</td><td class="num">8.636</td><td class="num">10</td><td class="num lose">&minus;5</td><td>zero dependency, but must re-serialize state</td></tr>
-        <tr><td class="name">PHP + Slim</td><td class="num">1.54&times;</td><td class="num">6</td><td class="num">17.588</td><td class="num">11</td><td class="num lose">&minus;5</td><td>framework cost about 4.2 ms per request</td></tr>
+        <tr><td class="name">PHP</td><td class="num">1.48&times;</td><td class="num">5</td><td class="num">8.636</td><td class="num">10</td><td class="num lose">&minus;5</td><td>zero dependency, but must re-serialize state</td></tr>
         <tr><td class="name">Python</td><td class="num">1.00&times;</td><td class="num">1</td><td class="num">1.621</td><td class="num">9</td><td class="num lose">&minus;8</td><td>fewest token, slow</td></tr>
       </tbody>
     </table></div>
@@ -864,29 +856,29 @@
           real backend from a toy comparison and you over-punish low-level by near double.</p>
       </div>
       <div class="card">
-        <h3>C use least CPU of all eleven</h3>
-        <p>0.059 CPU ms per request on the big app. 159&times; less than Slim PHP, 27&times; less
+        <h3>C use least CPU of all ten</h3>
+        <p>0.059 CPU ms per request on the big app. 86&times; less than PHP, 27&times; less
           than Java. Also the fastest cold start, 47 ms. And it cost the most token of anything
           measured.</p>
       </div>
       <div class="card">
         <h3>Zig use least RAM</h3>
-        <p>3.3 MB idle against Java 191 MB — 58&times;. Standard library only, zero dependency,
+        <p>3.3 MB idle against Java 191 MB — 57&times;. Standard library only, zero dependency,
           all three tier. Cost: 1.84&times; Python token, and Zig 0.16 delete
           <code>std.net</code> so almost no example exist for it.</p>
       </div>
       <div class="card">
         <h3>PHP is not slow. We made it slow three times.</h3>
-        <p>OPcache off, framework rebuilt per request, store O(n). Bare PHP with a fresh store
-          answer in 1.66 ms and with nothing at all in 0.874 ms — faster than C# or Python. What
-          remain is the shared-nothing model, not the language.</p>
+        <p>OPcache off, framework rebuilt per request, store O(n). With a fresh store PHP answer in
+          1.66 ms, and with nothing at all in 0.874 ms — faster than C# or Python. What remain is
+          the shared-nothing model, not the language.</p>
       </div>
       <div class="card">
         <h3>Framework cost PHP about 4.2 ms and save nothing</h3>
-        <p>Bare PHP is faster <em>and</em> smaller at every tier: 4.5&times;, 4.3&times; and
+        <p>No framework is faster <em>and</em> smaller at every tier: 4.5&times;, 4.3&times; and
           2.0&times; faster p50, 5&times; less CPU, 15,607 token against 16,238, and no manifest.
-          PHP is the only language measured both way, which make this a direct read on framework
-          cost with language and logic held constant.</p>
+          We measured PHP both way before dropping the framework one, which make this a direct read
+          on framework cost with language and logic held constant.</p>
       </div>
       <div class="card">
         <h3>Java JIT worth 2.2&times;</h3>
@@ -914,9 +906,8 @@
       </div>
       <div class="card">
         <h3>Runtime spread crush token spread</h3>
-        <p>Token 2.80&times;. Speed 81&times;. Throughput 57&times;. RAM 58&times;. CPU
-          159&times;. Cold start 112&times;. Source size is the flattest axis in the whole
-          study.</p>
+        <p>Token 2.80&times;. Cold start 112&times;. CPU 86&times;. RAM 57&times;. Throughput
+          41&times;. Speed 40&times;. Source size is the flattest axis in the whole study.</p>
       </div>
     </div>
   </section>
@@ -931,9 +922,10 @@
         <code>200</code>, 477 <code>201</code>, 748 <code>409</code>. So C latency there look
         slightly better than true, because a rejected write is cheap. Also a real finding: C is
         the only build with a hard ceiling on accumulated state.</li>
-      <li><strong>PHP number are median of three run.</strong> Slim swing 13.73 / 6.07 / 6.10 ms
-        at the small tier because its Composer autoloader touch about a hundred file per request.
-        Bare PHP gave 1.36 / 1.36 / 1.38 ms. Raw repeat in <code>perf-variance/</code>.</li>
+      <li><strong>PHP number are median of three run.</strong> PHP repeat tight — 1.362 / 1.361 /
+        1.376 ms at small, inside 1.1% — so the median barely matter. The dropped framework build
+        swung 13.73 / 6.07 / 6.10 ms, because its Composer autoloader touch about a hundred file
+        per request. Raw repeat in <code>perf-variance/</code>.</li>
       <li><strong>Do not rank on req/s.</strong> Three repeat run of Go gave 580, 1,095 and 1,145
         req/s while p50 moved about 13%. Throughput derive from the mean, and for a
         sub-millisecond server one 15.6 ms stall cost the wall clock of ~50 request. The
@@ -963,7 +955,7 @@
   </section>
 
   <section id="diverge">
-    <h2>15. Where the thirty-three builds differ</h2>
+    <h2>15. Where the thirty builds differ</h2>
     <p class="say">No test case reach any of these. Recorded because each move the token count a
       little, or because a language force the choice. Full list in
       <code>METHODOLOGY.md</code>.</p>
@@ -972,13 +964,13 @@
         collide with <code>System.Threading.Tasks.Task</code>. And every build use
         <code>baseScore</code> not <code>base</code>, because <code>base</code> is a C#
         keyword.</li>
-      <li><strong>Both PHP variant write their store to disk.</strong> PHP start a fresh process
-        per request and cannot hold memory, and APCu is not on this box. The only build that touch
-        disk. A property of the execution model, not a shortcut.</li>
+      <li><strong>PHP write its store to disk.</strong> PHP start a fresh process per request and
+        cannot hold memory, and APCu is not on this box. The only build that touch disk. A property
+        of the execution model, not a shortcut.</li>
       <li><strong>C, C++ and Zig reject an unknown JSON key</strong> with <code>400</code>; the
         other eight ignore it. C and C++ would need a recursive value skipper; Zig inherit it from
         the <code>std.json</code> default.</li>
-      <li><strong>String length unit differ.</strong> Python, Rust, both PHP, Go and Zig count
+      <li><strong>String length unit differ.</strong> Python, Rust, PHP, Go and Zig count
         character. Java and C# count UTF-16 unit. C and C++ count byte. Every test string is ASCII
         so all agree.</li>
       <li><strong>Idempotency scope is unpinned.</strong> The spec say every <code>POST</code>
@@ -986,7 +978,7 @@
         the prose. No test case separate them — so this is a <em>defect in our test</em>, not in
         any build.</li>
       <li><strong>C use fixed capacity everywhere</strong> and return <code>409</code> on
-        overflow. A real ceiling the other ten do not have.</li>
+        overflow. A real ceiling the other nine do not have.</li>
       <li><strong>Header timing force three different mechanism.</strong> FastAPI can set a header
         after the handler return. ASP.NET need <code>Response.OnStarting</code>, Spring need a
         <code>ThreadLocal</code> written during the handler, because both commit the response
@@ -998,9 +990,9 @@
   <section id="limits">
     <h2>16. Limits — read before you quote a number</h2>
     <ol class="plain">
-      <li><strong>Framework included, so this measure ecosystem too.</strong> A real framework for
-        each language, not bare stdlib — except PHP, which is measured both way precisely because
-        there the framework is optional. FastAPI and Minimal API hide an HTTP parser, JSON parser,
+      <li><strong>Framework included, so this measure ecosystem too.</strong> Each language use
+        what a real team would pick — which for PHP mean no framework, precisely because there the
+        framework is optional and cost 4.2 ms. FastAPI and Minimal API hide an HTTP parser, JSON parser,
         JSON writer and socket loop that C, C++ and Zig write by hand. A real gap, real for a
         team, but not a measure of pure syntax. A stdlib-only run would squeeze the band hard and
         is not done here.</li>
@@ -1018,8 +1010,8 @@
       <li><strong>One workload shape.</strong> JSON over HTTP, CRUD, in-memory state. It say
         nothing about numeric work, streaming, heavy concurrency, or a real database. And note the
         in-memory-state assumption is exactly what penalise PHP.</li>
-      <li><strong>Author effect.</strong> The same author wrote or directed all thirty-three, so
-        style is more consistent than thirty-three independent team would be — that likely
+      <li><strong>Author effect.</strong> The same author wrote or directed all thirty, so
+        style is more consistent than thirty independent team would be — that likely
         <em>reduce</em> variance versus the real world. The other way, per-language idiom
         expertise is uneven, and a specialist might write any one of these tighter.</li>
       <li><strong>Three size = three dot.</strong> The shrink is large and consistent, but three
@@ -1031,11 +1023,11 @@
   </section>
 
   <footer>
-    33 builds &middot; 259 tests each, all pass &middot; 99 runtime measurements &middot;
-    2 tokenizers &middot; 32,623 source lines<br>
+    30 builds &middot; 259 tests each, all pass &middot; 90 runtime measurements &middot;
+    2 tokenizers &middot; 29,973 source lines<br>
     CPython 3.13 &middot; Node + tsc 5 &middot; .NET 10 &middot; Go 1.26 &middot;
-    PHP 8.5 (OPcache on) &middot; Temurin JDK 21 &middot; rustc stable (GNU host) &middot;
-    Zig 0.16 &middot; gcc/g++ 16 (mingw)<br>
+    PHP 8.5 (OPcache on, no framework) &middot; Temurin JDK 21 &middot;
+    rustc stable (GNU host) &middot; Zig 0.16 &middot; gcc/g++ 16 (mingw)<br>
     Short version: <code>docs/benchmark.html</code>. Full method, threats to validity and the
     divergence register: <code>METHODOLOGY.md</code>.
     Repo: <code>ai-llm-programming-language-friendliness</code>.

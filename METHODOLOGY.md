@@ -365,6 +365,56 @@ be fixed. OPcache, the framework rebuild and the O(n) store were all ours. This
 one is the platform's, and the honest response is to label it rather than to
 quietly publish a ranking it corrupts.
 
+### PHP's latency on this host is disk contention, and it is bimodal
+
+Running the whole suite three times exposed a second host effect, this one
+affecting only PHP. Across all 126 rows the three passes agree closely — the
+median language moves by 1.1x and the worst of the other thirteen by 1.4x. PHP
+moves by **6.3x**, and its values do not scatter, they cluster in two modes:
+
+| PHP, 10000 requests | published median | the three passes | fast to slow |
+| --- | ---: | --- | ---: |
+| small | 11.260 ms | 1.738, 11.260, 12.459 | 7.2x |
+| mid | 2.060 ms | 1.652, 2.060, 11.408 | 6.9x |
+| large | 13.329 ms | 8.126, 13.329, 14.713 | 1.8x |
+
+The cause follows from a divergence already in the register. PHP cannot hold
+state between requests, so it is the only implementation that must write its
+store to disk on every request. That makes its latency a measurement of disk and
+page-cache behaviour, and this host carries roughly 40 percent background CPU
+load from unrelated long-running processes. An earlier pass on a quieter machine
+put PHP's small tier at 1.362 ms, with three runs inside 1.1 percent of each
+other.
+
+### The consequence for both: read CPU, not latency
+
+Splitting wall-clock time into work and waiting makes the shape of the problem
+plain. At 10000 requests:
+
+| Language | tier | p50 | CPU per request | waiting |
+| --- | --- | ---: | ---: | ---: |
+| Python | small | 1.310 ms | 1.290 ms | 0.02 ms |
+| PHP | small | 11.260 ms | 0.922 ms | 10.34 ms |
+| Ruby | small | 15.403 ms | 1.656 ms | 13.75 ms |
+| Python | large | 1.830 ms | 1.884 ms | ~0 ms |
+| PHP | large | 13.329 ms | 4.948 ms | 8.38 ms |
+| Ruby | large | 15.608 ms | 1.938 ms | 13.67 ms |
+
+Python does essentially no waiting: its wall clock is its CPU. PHP and Ruby wait
+for the host — Ruby for a constant timer tick, PHP for the disk. Neither wait is
+a property of the language, and neither is something the implementation can avoid
+given the rules of this study.
+
+**So on this host, CPU per request is the comparable runtime figure and latency
+is not**, for these two languages. Read that way, PHP spends 0.92 ms of CPU on
+the small tier against Python's 1.29 ms, which is a very different statement from
+the eightfold latency gap on the same row. Ruby spends 1.66 ms against Python's
+1.29 ms. Both are ordinary numbers for a dynamic language, and both disappear
+behind the wall clock if the waiting is not separated out.
+
+The latency and throughput tables are still published, because removing them
+would hide data rather than clarify it. They carry this warning instead.
+
 ### C and C++ were not using keep-alive
 
 Both sent `Connection: close` on every response, forcing a fresh TCP connection

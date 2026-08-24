@@ -6,138 +6,161 @@ Sequential client, one request at a time. Counts measured: 100, 1000, 10000. Det
 
 - NON-2XX large/c at 10000: errors=0 statuses={'200': 8781, '201': 477, '409': 748}
 
+## Work against waiting
+
+`p50` minus CPU per request. A language that computes for its whole wall clock sits near zero. A large positive value means the host made it wait, which is not a property of the language and is not comparable across languages. Large tier, 10000 requests.
+
+A negative value is not an error and does not mean the work was free. CPU is counted across the whole process tree, so a runtime that uses other cores — a JVM running its garbage collector and JIT compiler alongside the request — can spend more CPU than the request took in wall-clock time. It marks parallelism, not waiting.
+
+| Language | p50 | CPU ms/req | waiting | reading |
+|---|---:|---:|---:|---|
+| Kotlin | 0.722 | 2.041 | -1.318 | compute-bound, latency is comparable |
+| Java | 0.697 | 1.841 | -1.143 | compute-bound, latency is comparable |
+| C# | 0.468 | 0.642 | -0.174 | compute-bound, latency is comparable |
+| Python | 1.830 | 1.884 | -0.054 | compute-bound, latency is comparable |
+| TypeScript | 0.457 | 0.386 | +0.071 | compute-bound, latency is comparable |
+| JavaScript | 0.461 | 0.359 | +0.102 | compute-bound, latency is comparable |
+| Go | 0.364 | 0.248 | +0.115 | compute-bound, latency is comparable |
+| Zig | 0.237 | 0.072 | +0.165 | compute-bound, latency is comparable |
+| Common Lisp | 0.562 | 0.394 | +0.168 | compute-bound, latency is comparable |
+| C | 0.232 | 0.064 | +0.168 | compute-bound, latency is comparable |
+| C++ | 0.254 | 0.081 | +0.173 | compute-bound, latency is comparable |
+| Rust | 0.320 | 0.141 | +0.180 | compute-bound, latency is comparable |
+| PHP | 13.329 | 4.948 | +8.381 | **host-limited, do not rank on latency** |
+| Ruby | 15.608 | 1.938 | +13.671 | **host-limited, do not rank on latency** |
+
 ## Cold start
 
 Milliseconds from process spawn to the first successful `GET /health`. The probe column is the harness's own cost to detect a server already listening, measured on every run; startup is the difference.
 
 | Language | small | mid | large | median probe | median startup |
 |---|---:|---:|---:|---:|---:|
-| C | 66 ms | 69 ms | 76 ms | 12.7 ms | **56 ms** |
-| Zig | 63 ms | 69 ms | 72 ms | 1.7 ms | **61 ms** |
-| Rust | 80 ms | 74 ms | 70 ms | 2.4 ms | **68 ms** |
-| Go | 77 ms | 68 ms | 73 ms | 2.2 ms | **71 ms** |
-| C++ | 62 ms | 73 ms | 83 ms | 2.1 ms | **71 ms** |
-| PHP | 145 ms | 138 ms | 149 ms | 14.5 ms | **131 ms** |
-| TypeScript | 263 ms | 318 ms | 371 ms | 4.1 ms | **315 ms** |
-| JavaScript | 265 ms | 337 ms | 345 ms | 14.4 ms | **320 ms** |
-| Common Lisp | 416 ms | 591 ms | 697 ms | 13.2 ms | **588 ms** |
-| C# | 436 ms | 642 ms | 1308 ms | 16.6 ms | **625 ms** |
-| Python | 700 ms | 1598 ms | 1015 ms | 6.4 ms | **1009 ms** |
-| Ruby | 1014 ms | 2138 ms | 1309 ms | 17.3 ms | **1294 ms** |
-| Java | 9376 ms | 5339 ms | 5265 ms | 5.4 ms | **5334 ms** |
-| Kotlin | 7514 ms | 6800 ms | 5987 ms | 6.4 ms | **6793 ms** |
+| Zig | 71 ms | 79 ms | 65 ms | 16.9 ms | **49 ms** |
+| Go | 69 ms | 79 ms | 60 ms | 17.1 ms | **51 ms** |
+| C | 78 ms | 70 ms | 67 ms | 12.4 ms | **55 ms** |
+| Rust | 73 ms | 77 ms | 70 ms | 17.9 ms | **59 ms** |
+| C++ | 62 ms | 73 ms | 89 ms | 11.7 ms | **71 ms** |
+| PHP | 134 ms | 132 ms | 137 ms | 17.0 ms | **116 ms** |
+| TypeScript | 309 ms | 358 ms | 305 ms | 13.5 ms | **295 ms** |
+| JavaScript | 303 ms | 337 ms | 330 ms | 14.3 ms | **305 ms** |
+| Common Lisp | 483 ms | 542 ms | 601 ms | 16.8 ms | **525 ms** |
+| C# | 449 ms | 560 ms | 542 ms | 5.8 ms | **536 ms** |
+| Python | 834 ms | 815 ms | 920 ms | 4.3 ms | **830 ms** |
+| Ruby | 1418 ms | 1313 ms | 1392 ms | 13.1 ms | **1376 ms** |
+| Java | 5521 ms | 5339 ms | 5265 ms | 5.3 ms | **5334 ms** |
+| Kotlin | 5477 ms | 5881 ms | 6002 ms | 18.3 ms | **5849 ms** |
 
 ## small tier — latency and throughput at 10000 requests
 
 | Language | p50 | p90 | mean | p99 | max | req/s |
 |---|---:|---:|---:|---:|---:|---:|
+| C | **0.189** | 0.276 | 0.347 | 10.8 | 26.8 | 2771 |
 | C++ | **0.195** | 0.261 | 0.358 | 10.9 | 57.2 | 2678 |
-| C | **0.196** | 0.267 | 0.356 | 11.2 | 42.7 | 2718 |
-| Zig | **0.203** | 0.273 | 0.350 | 10.9 | 48.3 | 2766 |
-| Rust | **0.229** | 0.292 | 0.403 | 11.1 | 52.4 | 2411 |
-| Go | **0.260** | 0.317 | 0.417 | 10.6 | 15.8 | 2328 |
-| TypeScript | **0.349** | 0.457 | 0.557 | 10.7 | 16.7 | 1758 |
-| JavaScript | **0.359** | 0.466 | 0.569 | 10.8 | 16.0 | 1720 |
+| Zig | **0.210** | 0.287 | 0.357 | 10.8 | 45.3 | 2709 |
+| Rust | **0.243** | 0.332 | 0.440 | 11.1 | 65.9 | 2206 |
+| Go | **0.272** | 0.342 | 0.501 | 11.0 | 75.9 | 1943 |
 | Common Lisp | **0.391** | 0.509 | 0.785 | 14.8 | 66.1 | 1251 |
-| C# | **0.396** | 0.534 | 0.647 | 11.0 | 17.5 | 1515 |
-| Java | **0.576** | 1.307 | 1.207 | 16.2 | 85.7 | 817 |
-| Kotlin | **0.629** | 1.468 | 1.581 | 21.2 | 95.1 | 626 |
-| Python | **1.066** | 1.472 | 1.645 | 12.1 | 72.1 | 602 |
-| PHP | **12.459** | 28.914 | 11.803 | 33.3 | 61.7 | 84 |
-| Ruby | **15.082** | 26.205 | 15.692 | 66.0 | 105.9 | 64 |
+| TypeScript | **0.393** | 0.534 | 0.663 | 11.2 | 58.1 | 1476 |
+| JavaScript | **0.393** | 0.540 | 0.673 | 11.3 | 69.1 | 1454 |
+| C# | **0.417** | 0.591 | 0.792 | 11.7 | 75.7 | 1238 |
+| Java | **0.583** | 1.214 | 1.249 | 15.8 | 75.5 | 790 |
+| Kotlin | **0.660** | 1.348 | 1.368 | 15.1 | 81.4 | 722 |
+| Python | **1.310** | 2.162 | 2.345 | 17.0 | 81.1 | 423 |
+| PHP | **11.260** | 29.507 | 11.152 | 41.6 | 97.6 | 89 |
+| Ruby | **15.403** | 25.681 | 15.719 | 59.0 | 95.9 | 64 |
 
 ## mid tier — latency and throughput at 10000 requests
 
 | Language | p50 | p90 | mean | p99 | max | req/s |
 |---|---:|---:|---:|---:|---:|---:|
+| C | **0.222** | 0.309 | 0.385 | 10.9 | 27.0 | 2516 |
 | C++ | **0.228** | 0.306 | 0.424 | 11.1 | 67.5 | 2287 |
-| C | **0.229** | 0.304 | 0.426 | 11.9 | 50.1 | 2272 |
-| Zig | **0.234** | 0.307 | 0.440 | 12.0 | 53.1 | 2208 |
-| Go | **0.288** | 0.377 | 0.611 | 11.7 | 86.8 | 1602 |
-| Rust | **0.306** | 0.377 | 0.608 | 13.2 | 69.3 | 1605 |
+| Zig | **0.231** | 0.334 | 0.416 | 11.1 | 54.2 | 2330 |
+| Go | **0.291** | 0.366 | 0.563 | 11.4 | 75.4 | 1733 |
+| Rust | **0.300** | 0.428 | 0.537 | 11.7 | 44.7 | 1810 |
 | C# | **0.408** | 0.579 | 0.906 | 13.1 | 98.5 | 1086 |
-| TypeScript | **0.450** | 0.626 | 0.866 | 15.5 | 71.3 | 1133 |
-| JavaScript | **0.450** | 0.635 | 0.867 | 15.1 | 60.7 | 1133 |
-| Common Lisp | **0.474** | 0.637 | 0.899 | 15.3 | 72.9 | 1093 |
+| JavaScript | **0.422** | 0.588 | 0.729 | 11.6 | 72.5 | 1344 |
+| TypeScript | **0.437** | 0.629 | 0.754 | 11.8 | 47.9 | 1299 |
+| Common Lisp | **0.468** | 0.665 | 0.841 | 12.6 | 77.3 | 1168 |
 | Java | **0.627** | 1.307 | 1.380 | 16.7 | 95.1 | 716 |
-| Kotlin | **0.767** | 1.998 | 2.231 | 33.9 | 97.5 | 444 |
-| PHP | **1.652** | 23.010 | 7.383 | 55.5 | 113.5 | 135 |
-| Python | **2.070** | 12.409 | 4.245 | 47.9 | 99.2 | 234 |
-| Ruby | **12.649** | 30.894 | 15.528 | 76.5 | 120.2 | 64 |
+| Kotlin | **0.742** | 1.680 | 1.585 | 16.3 | 79.0 | 623 |
+| Python | **1.640** | 2.726 | 2.812 | 15.9 | 76.1 | 353 |
+| PHP | **2.060** | 29.526 | 10.641 | 42.3 | 88.8 | 94 |
+| Ruby | **15.548** | 29.227 | 16.880 | 71.7 | 205.7 | 59 |
 
 ## large tier — latency and throughput at 10000 requests
 
 | Language | p50 | p90 | mean | p99 | max | req/s |
 |---|---:|---:|---:|---:|---:|---:|
-| Zig | **0.235** | 0.310 | 0.404 | 10.9 | 69.7 | 2386 |
-| C | **0.241** | 0.321 | 0.408 | 11.1 | 39.1 | 2365 |
-| C++ | **0.246** | 0.319 | 0.434 | 11.0 | 62.5 | 2224 |
+| C | **0.232** | 0.316 | 0.407 | 10.9 | 64.5 | 2379 |
+| Zig | **0.237** | 0.306 | 0.396 | 10.7 | 45.0 | 2433 |
+| C++ | **0.254** | 0.329 | 0.454 | 11.3 | 48.8 | 2126 |
 | Rust | **0.320** | 0.409 | 0.541 | 11.5 | 50.7 | 1790 |
-| Go | **0.397** | 0.650 | 1.640 | 43.1 | 96.5 | 602 |
-| JavaScript | **0.453** | 0.648 | 0.817 | 12.3 | 58.6 | 1196 |
-| C# | **0.470** | 1.106 | 2.093 | 48.1 | 99.6 | 473 |
-| TypeScript | **0.491** | 0.712 | 1.015 | 16.8 | 74.7 | 966 |
-| Common Lisp | **0.562** | 0.824 | 0.981 | 12.5 | 74.9 | 999 |
+| Go | **0.364** | 0.520 | 0.743 | 12.8 | 93.6 | 1314 |
+| TypeScript | **0.457** | 0.648 | 0.784 | 12.0 | 52.5 | 1245 |
+| JavaScript | **0.461** | 0.651 | 0.784 | 11.8 | 49.4 | 1245 |
+| C# | **0.468** | 0.670 | 0.903 | 12.6 | 88.7 | 1083 |
+| Common Lisp | **0.562** | 0.810 | 0.976 | 12.5 | 73.8 | 1005 |
 | Java | **0.697** | 1.438 | 1.494 | 16.6 | 77.0 | 659 |
 | Kotlin | **0.722** | 1.606 | 1.571 | 16.7 | 80.6 | 627 |
 | Python | **1.830** | 10.866 | 3.502 | 37.0 | 90.3 | 284 |
-| PHP | **8.126** | 32.856 | 15.762 | 67.7 | 144.5 | 63 |
-| Ruby | **15.747** | 29.485 | 17.559 | 69.7 | 131.3 | 57 |
+| PHP | **13.329** | 31.914 | 16.347 | 58.3 | 104.9 | 61 |
+| Ruby | **15.608** | 26.399 | 16.579 | 61.5 | 100.8 | 60 |
 
 ## small tier — CPU and memory at 10000 requests
 
 | Language | CPU ms/req | idle RSS | peak RSS |
 |---|---:|---:|---:|
-| Zig | 0.064 | **3.1 MB** | 3.2 MB |
-| C | 0.050 | **4.2 MB** | 4.3 MB |
+| Zig | 0.059 | **3.1 MB** | 3.2 MB |
+| C | 0.056 | **4.2 MB** | 4.3 MB |
 | C++ | 0.039 | **4.2 MB** | 4.3 MB |
-| Rust | 0.091 | **5.8 MB** | 6.0 MB |
-| Go | 0.142 | **8.1 MB** | 15.0 MB |
-| PHP | 0.829 | **33.7 MB** | 34.4 MB |
-| Ruby | 1.387 | **40.5 MB** | 41.9 MB |
-| C# | 0.609 | **48.0 MB** | 64.9 MB |
-| Python | 1.018 | **48.2 MB** | 48.4 MB |
-| JavaScript | 0.216 | **65.2 MB** | 72.3 MB |
-| TypeScript | 0.223 | **65.5 MB** | 72.0 MB |
+| Rust | 0.106 | **5.7 MB** | 6.0 MB |
+| Go | 0.156 | **8.0 MB** | 15.0 MB |
+| PHP | 0.922 | **33.7 MB** | 34.3 MB |
+| Ruby | 1.656 | **42.2 MB** | 43.4 MB |
+| C# | 0.603 | **48.1 MB** | 65.1 MB |
+| Python | 1.290 | **48.4 MB** | 48.6 MB |
+| TypeScript | 0.247 | **65.3 MB** | 78.4 MB |
+| JavaScript | 0.275 | **65.5 MB** | 71.7 MB |
 | Common Lisp | 0.212 | **122.6 MB** | 128.6 MB |
-| Java | 1.687 | **182.6 MB** | 215.6 MB |
-| Kotlin | 1.826 | **257.5 MB** | 273.2 MB |
+| Java | 1.667 | **184.6 MB** | 220.8 MB |
+| Kotlin | 1.709 | **229.6 MB** | 279.7 MB |
 
 ## mid tier — CPU and memory at 10000 requests
 
 | Language | CPU ms/req | idle RSS | peak RSS |
 |---|---:|---:|---:|
-| Zig | 0.069 | **3.3 MB** | 3.4 MB |
-| C | 0.045 | **4.2 MB** | 4.2 MB |
+| Zig | 0.066 | **3.3 MB** | 3.4 MB |
+| C | 0.053 | **4.2 MB** | 4.3 MB |
 | C++ | 0.067 | **5.1 MB** | 5.2 MB |
-| Rust | 0.147 | **6.0 MB** | 6.3 MB |
-| Go | 0.214 | **8.4 MB** | 15.7 MB |
-| PHP | 0.920 | **34.3 MB** | 34.8 MB |
-| Ruby | 1.635 | **41.8 MB** | 42.5 MB |
+| Rust | 0.134 | **6.0 MB** | 6.3 MB |
+| Go | 0.245 | **8.3 MB** | 15.4 MB |
+| PHP | 1.079 | **34.4 MB** | 34.8 MB |
+| Ruby | 1.878 | **42.5 MB** | 43.5 MB |
 | C# | 0.607 | **48.8 MB** | 64.2 MB |
-| Python | 2.044 | **49.3 MB** | 50.1 MB |
-| TypeScript | 0.320 | **66.3 MB** | 74.0 MB |
-| JavaScript | 0.342 | **66.5 MB** | 73.2 MB |
-| Common Lisp | 0.272 | **126.5 MB** | 129.1 MB |
+| Python | 1.667 | **49.3 MB** | 49.9 MB |
+| TypeScript | 0.315 | **65.9 MB** | 73.6 MB |
+| JavaScript | 0.290 | **66.8 MB** | 73.7 MB |
+| Common Lisp | 0.267 | **126.5 MB** | 129.0 MB |
 | Java | 1.641 | **190.3 MB** | 206.8 MB |
-| Kotlin | 2.019 | **201.0 MB** | 225.9 MB |
+| Kotlin | 1.953 | **202.1 MB** | 374.1 MB |
 
 ## large tier — CPU and memory at 10000 requests
 
 | Language | CPU ms/req | idle RSS | peak RSS |
 |---|---:|---:|---:|
-| Zig | 0.067 | **3.3 MB** | 4.2 MB |
-| C | 0.062 | **4.2 MB** | 4.7 MB |
-| C++ | 0.066 | **5.2 MB** | 6.0 MB |
+| Zig | 0.072 | **3.3 MB** | 4.2 MB |
+| C | 0.064 | **4.2 MB** | 4.7 MB |
+| C++ | 0.081 | **5.2 MB** | 6.0 MB |
 | Rust | 0.141 | **6.1 MB** | 7.6 MB |
-| Go | 0.270 | **8.3 MB** | 16.6 MB |
-| PHP | 5.105 | **34.6 MB** | 36.7 MB |
-| Ruby | 1.864 | **42.7 MB** | 45.4 MB |
+| Go | 0.248 | **8.6 MB** | 16.1 MB |
+| PHP | 4.948 | **34.7 MB** | 36.9 MB |
+| Ruby | 1.938 | **43.1 MB** | 45.9 MB |
 | Python | 1.884 | **50.1 MB** | 52.1 MB |
-| C# | 0.617 | **50.7 MB** | 65.7 MB |
-| TypeScript | 0.366 | **66.7 MB** | 80.2 MB |
-| JavaScript | 0.338 | **66.8 MB** | 80.5 MB |
-| Common Lisp | 0.366 | **129.4 MB** | 131.6 MB |
+| C# | 0.642 | **51.0 MB** | 66.7 MB |
+| TypeScript | 0.386 | **66.5 MB** | 80.4 MB |
+| JavaScript | 0.359 | **66.8 MB** | 80.6 MB |
+| Common Lisp | 0.394 | **129.1 MB** | 131.2 MB |
 | Java | 1.841 | **188.1 MB** | 218.1 MB |
 | Kotlin | 2.041 | **195.9 MB** | 242.0 MB |
 
@@ -147,18 +170,39 @@ p50 milliseconds at each request count, large tier. A rising value means the imp
 
 | Language | 100 | 1000 | 10000 | drift |
 |---|---:|---:|---:|---:|
-| Kotlin | 2.479 | 1.645 | 0.722 | 0.29x |
-| Java | 1.735 | 1.384 | 0.697 | 0.40x |
-| C# | 0.677 | 0.901 | 0.470 | 0.69x |
-| JavaScript | 0.525 | 0.472 | 0.453 | 0.86x |
-| Zig | 0.258 | 0.231 | 0.235 | 0.91x |
-| Ruby | 17.068 | 15.620 | 15.747 | 0.92x |
-| TypeScript | 0.523 | 0.461 | 0.491 | 0.94x |
-| Python | 1.887 | 1.707 | 1.830 | 0.97x |
-| Rust | 0.313 | 0.292 | 0.320 | 1.02x |
-| C++ | 0.229 | 0.231 | 0.246 | 1.07x |
-| C | 0.224 | 0.218 | 0.241 | 1.07x |
-| Common Lisp | 0.518 | 0.562 | 0.562 | 1.09x |
-| Go | 0.340 | 0.343 | 0.397 | 1.17x |
-| PHP | 2.736 | 3.156 | 8.126 | **2.97x** |
+| Kotlin | 2.345 | 1.503 | 0.722 | 0.31x |
+| Java | 1.750 | 1.384 | 0.697 | 0.40x |
+| C# | 0.629 | 0.563 | 0.468 | 0.74x |
+| JavaScript | 0.529 | 0.482 | 0.461 | 0.87x |
+| TypeScript | 0.523 | 0.475 | 0.457 | 0.87x |
+| Ruby | 16.278 | 15.620 | 15.608 | 0.96x |
+| C | 0.239 | 0.222 | 0.232 | 0.97x |
+| Zig | 0.241 | 0.235 | 0.237 | 0.98x |
+| Python | 1.817 | 1.707 | 1.830 | 1.01x |
+| PHP | 12.854 | 3.672 | 13.329 | 1.04x |
+| Go | 0.339 | 0.322 | 0.364 | 1.07x |
+| Rust | 0.293 | 0.320 | 0.320 | 1.09x |
+| C++ | 0.229 | 0.239 | 0.254 | 1.11x |
+| Common Lisp | 0.484 | 0.514 | 0.562 | 1.16x |
+
+## Reproducibility across repeated passes
+
+The whole suite was run 3 times and each published row is the median pass by p50, chosen as a whole row so every figure in it comes from one real run. This column is how far the passes moved.
+
+| Language | median spread | worst spread |
+|---|---:|---:|
+| PHP | 6.33x  **bimodal** | 7.17x |
+| Python | 1.24x | 1.36x |
+| TypeScript | 1.13x | 1.19x |
+| Java | 1.13x | 1.39x |
+| Zig | 1.12x | 1.21x |
+| Common Lisp | 1.12x | 1.19x |
+| Rust | 1.11x | 1.21x |
+| Kotlin | 1.11x | 1.36x |
+| JavaScript | 1.10x | 1.17x |
+| C | 1.10x | 1.27x |
+| C++ | 1.07x | 1.20x |
+| Go | 1.06x | 1.17x |
+| C# | 1.05x | 1.65x |
+| Ruby | 1.04x | 1.25x |
 

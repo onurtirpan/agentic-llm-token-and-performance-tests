@@ -165,6 +165,75 @@ def problems(rows) -> None:
     print()
 
 
+def waiting_table(rows, count) -> None:
+    """Split wall clock into work and waiting, and name the rows the host distorts.
+
+    A language whose p50 far exceeds its CPU per request is not computing, it is
+    waiting on this host. Latency cannot be compared across languages when some
+    of them are waiting and others are not, so the gap is published rather than
+    left for a reader to infer from two separate tables.
+    """
+    print("## Work against waiting")
+    print()
+    print("`p50` minus CPU per request. A language that computes for its whole "
+          "wall clock sits near zero. A large positive value means the host made "
+          "it wait, which is not a property of the language and is not comparable "
+          "across languages. Large tier, "
+          f"{count} requests.")
+    print()
+    print("A negative value is not an error and does not mean the work was free. "
+          "CPU is counted across the whole process tree, so a runtime that uses "
+          "other cores — a JVM running its garbage collector and JIT compiler "
+          "alongside the request — can spend more CPU than the request took in "
+          "wall-clock time. It marks parallelism, not waiting.")
+    print()
+    print("| Language | p50 | CPU ms/req | waiting | reading |")
+    print("|---|---:|---:|---:|---|")
+    table = pick(rows, "large", count)
+    computed = []
+    for language in ORDER:
+        row = table.get(language)
+        if row is None or "warm" not in row:
+            continue
+        p50 = row["warm"]["p50Ms"]
+        cpu = row["warm"]["cpuMsPerRequest"]
+        computed.append((p50 - cpu, language, p50, cpu))
+    for waiting, language, p50, cpu in sorted(computed):
+        if waiting > 5.0:
+            note = "**host-limited, do not rank on latency**"
+        elif waiting > 1.0:
+            note = "some waiting"
+        else:
+            note = "compute-bound, latency is comparable"
+        print(f"| {NAMES[language]} | {p50:.3f} | {cpu:.3f} | {waiting:+.3f} | {note} |")
+    print()
+
+
+def variance_note(rows) -> None:
+    """Report how far the repeated passes moved, when the data carries them."""
+    spreads: dict[str, list[float]] = {}
+    for row in rows:
+        values = row.get("allP50Ms") or []
+        if len(values) > 1 and values[0] > 0:
+            spreads.setdefault(row["language"], []).append(values[-1] / values[0])
+    if not spreads:
+        return
+    passes = max(len(row.get("allP50Ms") or []) for row in rows)
+    print("## Reproducibility across repeated passes")
+    print()
+    print(f"The whole suite was run {passes} times and each published row is the "
+          "median pass by p50, chosen as a whole row so every figure in it comes "
+          "from one real run. This column is how far the passes moved.")
+    print()
+    print("| Language | median spread | worst spread |")
+    print("|---|---:|---:|")
+    for language, ratios in sorted(spreads.items(), key=lambda kv: -statistics.median(kv[1])):
+        flag = "  **bimodal**" if statistics.median(ratios) > 2 else ""
+        print(f"| {NAMES[language]} | {statistics.median(ratios):.2f}x{flag} "
+              f"| {max(ratios):.2f}x |")
+    print()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--count", type=int, default=10000)
@@ -181,11 +250,13 @@ def main() -> None:
           f"Detail tables below use {target} requests.")
     print()
     problems(rows)
+    waiting_table(rows, target)
     cold_start_table(rows)
     latency_table(rows, target)
     resource_table(rows, target)
     if len(counts) > 1:
         scaling_table(rows, counts)
+    variance_note(rows)
 
 
 if __name__ == "__main__":

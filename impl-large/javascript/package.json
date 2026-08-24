@@ -1,0 +1,12 @@
+{
+  "name": "task-service-large-javascript",
+  "private": true,
+  "type": "module",
+  "main": "src/api.js",
+  "scripts": {
+    "start": "node src/api.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

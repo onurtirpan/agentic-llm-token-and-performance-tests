@@ -668,6 +668,29 @@
   },
   {
     "tier": "large",
+    "language": "javascript",
+    "framework": "Express",
+    "source": {
+      "files": 4,
+      "lines": 1342,
+      "codeLines": 1154,
+      "characters": 42265,
+      "bytes": 42273,
+      "tokens": 10529,
+      "tokensCl100k": 10461
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 12,
+      "codeLines": 12,
+      "characters": 209,
+      "bytes": 209,
+      "tokens": 70,
+      "tokensCl100k": 70
+    }
+  },
+  {
+    "tier": "large",
     "language": "typescript",
     "framework": "Express",
     "source": {

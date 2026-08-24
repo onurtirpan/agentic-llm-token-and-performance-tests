@@ -24,10 +24,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TIERS = ("small", "mid", "large")
-ORDER = ["python", "typescript", "csharp", "go", "php", "java", "rust", "zig", "c", "cpp"]
-NAMES = {"python": "Python", "typescript": "TypeScript", "csharp": "C#", "go": "Go",
-         "php": "PHP", "java": "Java", "rust": "Rust", "zig": "Zig", "c": "C",
-         "cpp": "C++"}
+ORDER = ["python", "javascript", "typescript", "csharp", "go", "php", "ruby", "java",
+         "kotlin", "rust", "zig", "lisp", "c", "cpp"]
+NAMES = {"python": "Python", "javascript": "JavaScript", "typescript": "TypeScript",
+         "csharp": "C#", "go": "Go", "php": "PHP", "ruby": "Ruby", "java": "Java",
+         "kotlin": "Kotlin", "rust": "Rust", "zig": "Zig", "lisp": "Common Lisp",
+         "c": "C", "cpp": "C++"}
 
 
 def load() -> list[dict]:

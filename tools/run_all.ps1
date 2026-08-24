@@ -51,6 +51,10 @@ Pop-Location
 gcc -std=c11 -O2 -Wall -Wextra -static -o impl\c\taskservice.exe impl\c\main.c -lws2_32
 g++ -std=c++20 -O2 -Wall -Wextra -static -o impl\cpp\taskservice.exe impl\cpp\main.cpp -lws2_32
 Push-Location impl\zig; zig build-exe main.zig -O ReleaseSafe; Pop-Location
+# Dump an SBCL image with the dependencies in it. Loading them through Quicklisp
+# on every boot costs 4.6 s of cold start; from the image it is 0.2 s. No real
+# Common Lisp deployment pays the former.
+sbcl --non-interactive --no-userinit --load tools\build_lisp_core.lisp "impl/lisp/deps.core"
 
 Write-Host "`n=== conformance ===" -ForegroundColor Cyan
 Invoke-Case -Name "python" -Exe "python" -Arguments @("impl\python\main.py") -WaitSeconds 5
@@ -69,8 +73,9 @@ Invoke-Case -Name "kotlin" -Exe "$jdk\bin\java.exe" `
 Invoke-Case -Name "rust" -Exe ".\impl\rust\target\release\taskservice.exe" -WaitSeconds 2
 Invoke-Case -Name "zig" -Exe ".\impl\zig\main.exe" -WaitSeconds 2
 Invoke-Case -Name "lisp" -Exe "sbcl" `
-    -Arguments @("--non-interactive", "--no-userinit", "--load", "impl\lisp\run.lisp") `
-    -WaitSeconds 8
+    -Arguments @("--core", "impl/lisp/deps.core", "--noinform", "--non-interactive",
+                 "--no-userinit", "--load", "impl/lisp/main.lisp") `
+    -WaitSeconds 3
 Invoke-Case -Name "c" -Exe ".\impl\c\taskservice.exe" -WaitSeconds 2
 Invoke-Case -Name "cpp" -Exe ".\impl\cpp\taskservice.exe" -WaitSeconds 2
 

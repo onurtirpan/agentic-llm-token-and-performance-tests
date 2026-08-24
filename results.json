@@ -346,6 +346,29 @@
   },
   {
     "tier": "mid",
+    "language": "javascript",
+    "framework": "Express",
+    "source": {
+      "files": 1,
+      "lines": 471,
+      "codeLines": 421,
+      "characters": 14525,
+      "bytes": 14527,
+      "tokens": 3817,
+      "tokensCl100k": 3786
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 11,
+      "codeLines": 11,
+      "characters": 184,
+      "bytes": 184,
+      "tokens": 61,
+      "tokensCl100k": 62
+    }
+  },
+  {
+    "tier": "mid",
     "language": "typescript",
     "framework": "Express",
     "source": {
@@ -438,6 +461,29 @@
   },
   {
     "tier": "mid",
+    "language": "ruby",
+    "framework": "Sinatra",
+    "source": {
+      "files": 1,
+      "lines": 433,
+      "codeLines": 362,
+      "characters": 13242,
+      "bytes": 13244,
+      "tokens": 3533,
+      "tokensCl100k": 3515
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 4,
+      "codeLines": 3,
+      "characters": 76,
+      "bytes": 76,
+      "tokens": 33,
+      "tokensCl100k": 32
+    }
+  },
+  {
+    "tier": "mid",
     "language": "java",
     "framework": "Spring Boot",
     "source": {
@@ -457,6 +503,29 @@
       "bytes": 1094,
       "tokens": 324,
       "tokensCl100k": 312
+    }
+  },
+  {
+    "tier": "mid",
+    "language": "kotlin",
+    "framework": "Spring Boot",
+    "source": {
+      "files": 1,
+      "lines": 499,
+      "codeLines": 445,
+      "characters": 19242,
+      "bytes": 19244,
+      "tokens": 4526,
+      "tokensCl100k": 4301
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 69,
+      "codeLines": 62,
+      "characters": 2049,
+      "bytes": 2049,
+      "tokens": 553,
+      "tokensCl100k": 529
     }
   },
   {
@@ -503,6 +572,29 @@
       "bytes": 0,
       "tokens": 0,
       "tokensCl100k": 0
+    }
+  },
+  {
+    "tier": "mid",
+    "language": "lisp",
+    "framework": "Hunchentoot",
+    "source": {
+      "files": 1,
+      "lines": 532,
+      "codeLines": 466,
+      "characters": 21354,
+      "bytes": 21356,
+      "tokens": 5346,
+      "tokensCl100k": 5305
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 4,
+      "codeLines": 3,
+      "characters": 255,
+      "bytes": 255,
+      "tokens": 76,
+      "tokensCl100k": 76
     }
   },
   {

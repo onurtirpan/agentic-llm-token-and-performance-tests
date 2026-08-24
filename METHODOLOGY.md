@@ -482,9 +482,38 @@ Stated bluntly, in rough order of importance.
 
 ## 11. Divergence register
 
-Every known place where the ten implementations are not identical. No
-conformance case distinguishes any of these; each is recorded because it affects
-the token count slightly or because a language forced the choice.
+Every known place where the implementations are not identical. No conformance
+case distinguishes any of these; each is recorded because it affects the token
+count slightly or because a language forced the choice.
+
+### An unspecified case, and what twelve implementations did with it
+
+`POST /projects` with an explicit `{"ownerId": null}` is the one place where the
+implementations genuinely disagree, and it is worth stating first because it
+shows what an unwritten rule costs. The spec says `ownerId` "defaults to the
+caller", and says nothing about an explicit JSON `null`. Probing every mid-tier
+implementation returned **five different answers**:
+
+| Response | Implementations |
+| --- | --- |
+| `422 validation_failed`, `ownerId is not a known user` | Python, Go, Ruby |
+| `201`, `ownerId` stored as `null` | JavaScript, TypeScript |
+| `201`, `ownerId` stored as the caller's id | C#, Rust, Zig, C++ |
+| `201`, `ownerId` stored as `0` | C |
+| **`500 Internal Server Error`** | **Java, Kotlin** |
+
+Two of these are defects rather than readings of an ambiguous spec. Java and
+Kotlin unbox a null `Integer` into an `int` and crash, which also escapes the
+error envelope entirely and returns Spring Boot's default body. C stores `0`, an
+id no user has.
+
+This is recorded rather than quietly fixed because fixing it changes published
+token counts for several languages and needs a spec clarification, a new
+conformance case and a re-measurement of all fourteen. It is listed here as
+outstanding work, and it is the clearest evidence in this study for a general
+point: **a specification is only as strong as its test suite.** Ten of these
+twelve implementations passed all 98 cases while disagreeing about what the
+service does.
 
 1. **C# names the entity `TaskItem`.** `Task` collides with
    `System.Threading.Tasks.Task`.

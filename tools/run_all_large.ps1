@@ -6,6 +6,8 @@ $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
 $env:Path = "C:\Scoop\apps\mingw\current\bin;" + $env:Path
+$env:Path = $env:Path + ";C:\Scoop\apps\ruby\current\bin;C:\Scoop\apps\ruby\current\gems\bin"
+$env:Path = $env:Path + ";C:\Scoop\apps\sbcl\current"
 $jdk = "C:\Scoop\apps\temurin21-jdk\current"
 $env:JAVA_HOME = $jdk
 
@@ -51,6 +53,10 @@ Push-Location impl-large\csharp; dotnet build -c Release -v q --nologo; Pop-Loca
 Push-Location impl-large\rust; cargo build --release; Pop-Location
 Push-Location impl-large\java; & "C:\Scoop\apps\maven\current\bin\mvn.cmd" -q -B package -DskipTests; Pop-Location
 Push-Location impl-large\zig; zig build-exe main.zig -O ReleaseSafe; Pop-Location
+Push-Location impl-large\kotlin; & "C:\Scoop\apps\maven\current\bin\mvn.cmd" -q -B package -DskipTests; Pop-Location
+# Dump an SBCL image with the dependencies in it. Loading them through Quicklisp
+# on every boot costs 4.6 s of cold start; from the image it is 0.2 s.
+sbcl --non-interactive --no-userinit --load tools\build_lisp_core.lisp "impl-large/lisp/deps.core"
 gcc -std=c11 -O2 -Wall -Wextra -static -o impl-large\c\taskservice.exe `
     impl-large\c\api.c impl-large\c\service.c impl-large\c\store.c impl-large\c\domain.c -lws2_32
 g++ -std=c++20 -O2 -Wall -Wextra -static -o impl-large\cpp\taskservice.exe `
@@ -60,6 +66,7 @@ g++ -std=c++20 -O2 -Wall -Wextra -static -o impl-large\cpp\taskservice.exe `
 Write-Host "`n=== conformance and logs ===" -ForegroundColor Cyan
 Invoke-Case -Name "python" -Exe "python" -Arguments @("api.py") `
     -WorkDir "$root\impl-large\python" -WaitSeconds 6
+Invoke-Case -Name "javascript" -Exe "node" -Arguments @("impl-large\javascript\src\api.js")
 Invoke-Case -Name "typescript" -Exe "node" -Arguments @("impl-large\typescript\dist\api.js")
 Invoke-Case -Name "csharp" -Exe ".\impl-large\csharp\bin\Release\net10.0\csharp.exe" -WaitSeconds 5
 Invoke-Case -Name "go" -Exe ".\impl-large\go\taskservice.exe" -WaitSeconds 2
@@ -71,10 +78,16 @@ Invoke-Case -Name "php" -Exe "php" `
             Remove-Item "impl-large\php\$stale" -ErrorAction SilentlyContinue
         }
     }
+Invoke-Case -Name "ruby" -Exe "ruby" -Arguments @("impl-large\ruby\api.rb") -WaitSeconds 4
 Invoke-Case -Name "java" -Exe "$jdk\bin\java.exe" `
     -Arguments @("-jar", "impl-large\java\target\taskservice-0.1.0.jar") -WaitSeconds 14
+Invoke-Case -Name "kotlin" -Exe "$jdk\bin\java.exe" `
+    -Arguments @("-jar", "impl-large\kotlin\target\taskservice-0.1.0.jar") -WaitSeconds 14
 Invoke-Case -Name "rust" -Exe ".\impl-large\rust\target\release\taskservice.exe" -WaitSeconds 2
 Invoke-Case -Name "zig" -Exe ".\impl-large\zig\main.exe" -WaitSeconds 2
+Invoke-Case -Name "lisp" -Exe "sbcl" `
+    -Arguments @("--core", "impl-large/lisp/deps.core", "--noinform", "--non-interactive",
+                 "--no-userinit", "--load", "impl-large/lisp/api.lisp") -WaitSeconds 3
 Invoke-Case -Name "c" -Exe ".\impl-large\c\taskservice.exe" -WaitSeconds 2
 Invoke-Case -Name "cpp" -Exe ".\impl-large\cpp\taskservice.exe" -WaitSeconds 2
 

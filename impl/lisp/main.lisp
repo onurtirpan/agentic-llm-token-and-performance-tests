@@ -148,7 +148,7 @@
     (respond 200 (object "total" total "doneCount" done-count
                          "openCount" (- total done-count)
                          "avgScore" avg-score
-                         "topOpenTitle" (if best (task-title best) :null)))))
+                         "topOpenTitle" (if best (task-title best) 'null)))))
 
 (defparameter *routes*
   (list (list :get "^/health$" (lambda () (get-health)))

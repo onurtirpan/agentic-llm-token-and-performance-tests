@@ -50,14 +50,16 @@ ROOT = Path(__file__).resolve().parent.parent
 JDK = Path(r"C:\Scoop\apps\temurin21-jdk\current")
 HOST, PORT = "127.0.0.1", 8080
 
-LANGUAGES = ["python", "typescript", "csharp", "go", "php", "java", "rust", "zig", "c", "cpp"]
+LANGUAGES = ["python", "javascript", "typescript", "csharp", "go", "php", "ruby", "java",
+             "kotlin", "rust", "zig", "lisp", "c", "cpp"]
 TIER_DIR = {"small": "impl", "mid": "impl-mid", "large": "impl-large"}
 
 # A measured phase projected to run longer than this is skipped and recorded.
 TIME_BUDGET_SECONDS = 300.0
 
 # Slow starters need a longer readiness budget, not a fixed sleep.
-READY_TIMEOUT = {"java": 90.0, "csharp": 45.0, "python": 45.0}
+READY_TIMEOUT = {"java": 90.0, "kotlin": 90.0, "csharp": 45.0, "python": 45.0,
+                 "ruby": 45.0, "lisp": 60.0}
 
 
 def launch(tier: str, language: str):
@@ -68,15 +70,25 @@ def launch(tier: str, language: str):
     entry = "api" if tier == "large" else "main"
     table = {
         "python": ([sys.executable, f"{entry}.py"], base),
+        "javascript": (["node", str(base / "src" / f"{entry}.js")], ROOT),
         "typescript": (["node", str(base / "dist" / f"{entry}.js")], ROOT),
         "csharp": ([str(base / "bin" / "Release" / "net10.0" / "csharp.exe")], ROOT),
         "go": ([str(base / "taskservice.exe")], ROOT),
         "php": (["php", "-S", f"{HOST}:{PORT}", "-t", str(base / "public"),
                  str(base / "public" / "index.php")], ROOT),
+        "ruby": (["ruby", str(base / f"{entry}.rb")], ROOT),
         "java": ([str(JDK / "bin" / "java.exe"), "-jar",
                   str(base / "target" / "taskservice-0.1.0.jar")], ROOT),
+        "kotlin": ([str(JDK / "bin" / "java.exe"), "-jar",
+                    str(base / "target" / "taskservice-0.1.0.jar")], ROOT),
         "rust": ([str(base / "target" / "release" / "taskservice.exe")], ROOT),
         "zig": ([str(base / "main.exe")], ROOT),
+        # Common Lisp runs from a core image with the dependencies already in it.
+        # Loading them through Quicklisp on every boot would charge Lisp several
+        # seconds of cold start that no real deployment pays.
+        "lisp": (["sbcl", "--core", str(base / "deps.core"), "--noinform",
+                  "--non-interactive", "--no-userinit",
+                  "--load", str(base / f"{entry}.lisp")], ROOT),
         "c": ([str(base / "taskservice.exe")], ROOT),
         "cpp": ([str(base / "taskservice.exe")], ROOT),
     }
@@ -84,12 +96,16 @@ def launch(tier: str, language: str):
     # The artefact that must exist before this implementation can be launched.
     if language == "python":
         needed = base / f"{entry}.py"
-    elif language == "typescript":
+    elif language in ("typescript", "javascript"):
         needed = Path(argv[1])
-    elif language.startswith("php"):
+    elif language == "php":
         needed = base / "public" / "index.php"
-    elif language == "java":
+    elif language == "ruby":
+        needed = base / f"{entry}.rb"
+    elif language in ("java", "kotlin"):
         needed = Path(argv[2])
+    elif language == "lisp":
+        needed = base / "deps.core"
     else:
         needed = Path(argv[0])
     return (argv, cwd) if needed.exists() else None

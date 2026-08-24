@@ -1,0 +1,61 @@
+{
+  "_comment": "Popularity inputs for tools/report_market.py. These are NOT measured by this repo. They are third-party survey figures, recorded here so the derived share estimate is auditable and reproducible. Update the figures and the retrieved date together.",
+  "retrieved": "2026-08-24",
+  "sources": {
+    "so2025": {
+      "name": "Stack Overflow Developer Survey 2025, 'Programming, scripting and markup languages', all respondents",
+      "url": "https://survey.stackoverflow.co/2025/technology",
+      "n": 31771,
+      "measures": "percentage of respondents who did extensive development work in the language over the past year; multi-select, so the column sums to far more than 100"
+    },
+    "octoverse2025": {
+      "name": "GitHub Octoverse 2025",
+      "url": "https://github.blog/news-insights/octoverse/octoverse-a-new-developer-joins-github-every-second-as-ai-leads-typescript-to-1/",
+      "measures": "monthly contributors per language on GitHub; TypeScript passed Python and JavaScript in August 2025"
+    },
+    "tiobe2026": {
+      "name": "TIOBE Index, August 2026",
+      "url": "https://www.techrepublic.com/article/news-tiobe-august-2026-java-nears-c-plus-plus/",
+      "measures": "search-engine volume proxy, not developer count"
+    },
+    "jetbrains2025": {
+      "name": "JetBrains State of Developer Ecosystem 2025",
+      "url": "https://blog.jetbrains.com/research/2025/10/state-of-developer-ecosystem-2025/",
+      "n": 24534,
+      "measures": "usage and intent to adopt"
+    }
+  },
+
+  "_share_note": "share = so2025 normalised across the languages in this file only, then widened by 15 percent either side. The band is deliberate: the sources disagree, and a single number would imply a precision nobody has.",
+
+  "languages": {
+    "javascript": {"so2025": 66.0, "backendWeight": "high",
+                   "note": "Node.js leads web frameworks at 49.1 percent in the same survey"},
+    "python":     {"so2025": 57.9, "backendWeight": "high",
+                   "note": "figure includes heavy data-science and AI use, not only backend"},
+    "typescript": {"so2025": 43.6, "backendWeight": "high",
+                   "note": "number one on GitHub by monthly contributors since August 2025"},
+    "java":       {"so2025": 29.4, "backendWeight": "very high",
+                   "note": "backend share is higher than the raw figure suggests; little front-end use"},
+    "csharp":     {"so2025": 27.8, "backendWeight": "high",
+                   "note": "also carries Unity game development"},
+    "cpp":        {"so2025": 23.5, "backendWeight": "low",
+                   "note": "mostly systems, embedded and games; rarely an HTTP service"},
+    "c":          {"so2025": 22.0, "backendWeight": "low",
+                   "note": "mostly systems and embedded; rarely an HTTP service"},
+    "php":        {"so2025": 18.9, "backendWeight": "very high",
+                   "note": "almost entirely backend, so its backend share exceeds the raw figure"},
+    "go":         {"so2025": 16.4, "backendWeight": "very high",
+                   "note": "top five in US job postings for cloud, API and infrastructure work"},
+    "rust":       {"so2025": 14.8, "backendWeight": "medium",
+                   "note": "entered the TIOBE top ten in July 2026; much use is systems, not backend"},
+    "kotlin":     {"so2025": 10.8, "backendWeight": "medium",
+                   "note": "split between Android and JVM backend work"},
+    "ruby":       {"so2025":  6.4, "backendWeight": "very high",
+                   "note": "almost entirely backend, via Rails; slowly declining"},
+    "lisp":       {"so2025":  2.4, "backendWeight": "low",
+                   "note": "the survey category aggregates Common Lisp, Scheme and Emacs Lisp"},
+    "zig":        {"so2025":  2.1, "backendWeight": "low",
+                   "note": "pre-1.0; mostly systems work"}
+  }
+}

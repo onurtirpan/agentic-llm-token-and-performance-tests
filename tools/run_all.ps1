@@ -6,6 +6,8 @@ $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
 $env:Path = "C:\Scoop\apps\mingw\current\bin;" + $env:Path
+$env:Path = $env:Path + ";C:\Scoop\apps\ruby\current\bin;C:\Scoop\apps\ruby\current\gems\bin"
+$env:Path = $env:Path + ";C:\Scoop\apps\sbcl\current"
 $jdk = "C:\Scoop\apps\temurin21-jdk\current"
 
 function Stop-Port8080 {
@@ -43,22 +45,32 @@ Push-Location impl\java
 $env:JAVA_HOME = $jdk
 & "C:\Scoop\apps\maven\current\bin\mvn.cmd" -q -B package -DskipTests
 Pop-Location
+Push-Location impl\kotlin
+& "C:\Scoop\apps\maven\current\bin\mvn.cmd" -q -B package -DskipTests
+Pop-Location
 gcc -std=c11 -O2 -Wall -Wextra -static -o impl\c\taskservice.exe impl\c\main.c -lws2_32
 g++ -std=c++20 -O2 -Wall -Wextra -static -o impl\cpp\taskservice.exe impl\cpp\main.cpp -lws2_32
 Push-Location impl\zig; zig build-exe main.zig -O ReleaseSafe; Pop-Location
 
 Write-Host "`n=== conformance ===" -ForegroundColor Cyan
 Invoke-Case -Name "python" -Exe "python" -Arguments @("impl\python\main.py") -WaitSeconds 5
+Invoke-Case -Name "javascript" -Exe "node" -Arguments @("impl\javascript\src\main.js")
 Invoke-Case -Name "typescript" -Exe "node" -Arguments @("impl\typescript\dist\main.js")
 Invoke-Case -Name "csharp" -Exe ".\impl\csharp\bin\Release\net10.0\csharp.exe" -WaitSeconds 5
 Invoke-Case -Name "go" -Exe ".\impl\go\taskservice.exe" -WaitSeconds 2
 Invoke-Case -Name "php" -Exe "php" `
     -Arguments @("-S", "127.0.0.1:8080", "-t", "impl\php\public", "impl\php\public\index.php") `
     -Before { Remove-Item "impl\php\store.json" -ErrorAction SilentlyContinue }
+Invoke-Case -Name "ruby" -Exe "ruby" -Arguments @("impl\ruby\main.rb") -WaitSeconds 4
 Invoke-Case -Name "java" -Exe "$jdk\bin\java.exe" `
     -Arguments @("-jar", "impl\java\target\taskservice-0.1.0.jar") -WaitSeconds 14
+Invoke-Case -Name "kotlin" -Exe "$jdk\bin\java.exe" `
+    -Arguments @("-jar", "impl\kotlin\target\taskservice-0.1.0.jar") -WaitSeconds 14
 Invoke-Case -Name "rust" -Exe ".\impl\rust\target\release\taskservice.exe" -WaitSeconds 2
 Invoke-Case -Name "zig" -Exe ".\impl\zig\main.exe" -WaitSeconds 2
+Invoke-Case -Name "lisp" -Exe "sbcl" `
+    -Arguments @("--non-interactive", "--no-userinit", "--load", "impl\lisp\run.lisp") `
+    -WaitSeconds 8
 Invoke-Case -Name "c" -Exe ".\impl\c\taskservice.exe" -WaitSeconds 2
 Invoke-Case -Name "cpp" -Exe ".\impl\cpp\taskservice.exe" -WaitSeconds 2
 

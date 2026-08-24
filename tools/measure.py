@@ -26,13 +26,17 @@ OLD_ENCODER = tiktoken.get_encoding("cl100k_base")
 
 FRAMEWORKS = {
     "python": "FastAPI",
+    "javascript": "Express",
     "typescript": "Express",
     "csharp": "ASP.NET Minimal API",
     "go": "net/http",
     "php": "no framework",
+    "ruby": "Sinatra",
     "java": "Spring Boot",
+    "kotlin": "Spring Boot",
     "rust": "Axum",
     "zig": "std.http",
+    "lisp": "Hunchentoot",
     "c": "raw winsock",
     "cpp": "raw winsock",
 }
@@ -40,13 +44,17 @@ FRAMEWORKS = {
 # Line comment markers per language. A block-comment opener is handled separately.
 LINE_MARKERS = {
     "python": ("#",),
+    "javascript": ("//",),
     "typescript": ("//",),
     "csharp": ("//",),
     "go": ("//",),
     "php": ("//", "#", "*"),
+    "ruby": ("#",),
     "java": ("//",),
+    "kotlin": ("//",),
     "rust": ("//",),
     "zig": ("//",),
+    "lisp": (";",),
     "c": ("//", "*"),
     "cpp": ("//", "*"),
 }
@@ -56,26 +64,34 @@ LINE_MARKERS = {
 # picked up without listing every file.
 EXTENSIONS = {
     "python": (".py",),
+    "javascript": (".js",),
     "typescript": (".ts",),
     "csharp": (".cs",),
     "go": (".go",),
     "php": (".php",),
+    "ruby": (".rb",),
     "java": (".java",),
+    "kotlin": (".kt",),
     "rust": (".rs",),
     "zig": (".zig",),
+    "lisp": (".lisp",),
     "c": (".c", ".h"),
     "cpp": (".cpp", ".hpp", ".h"),
 }
 
 MANIFESTS = {
     "python": ["requirements.txt"],
+    "javascript": ["package.json"],
     "typescript": ["package.json", "tsconfig.json"],
     "csharp": ["csharp.csproj"],
     "go": ["go.mod"],
     "php": [],
+    "ruby": ["Gemfile"],
     "java": ["pom.xml", "src/main/resources/application.properties"],
+    "kotlin": ["pom.xml"],
     "rust": ["Cargo.toml"],
     "zig": ["build.zig", "build.zig.zon"],
+    "lisp": ["run.lisp"],
     "c": [],
     "cpp": [],
 }
@@ -83,8 +99,8 @@ MANIFESTS = {
 # Build output and dependency trees never count as application source.
 SKIP_DIRS = {"node_modules", "dist", "bin", "obj", "target", "vendor", ".zig-cache",
              "zig-out", "build", "__pycache__", ".git"}
-# A Zig build script is a manifest, not application source.
-SKIP_FILES = {"build.zig"}
+# A Zig build script and the Lisp loader are manifests, not application source.
+SKIP_FILES = {"build.zig", "run.lisp"}
 
 TIERS = [("small", "impl"), ("mid", "impl-mid"), ("large", "impl-large")]
 ORDER = list(FRAMEWORKS)
@@ -212,6 +228,18 @@ for tier, folder in TIERS:
 if all_rows:
     print_growth(all_rows)
     output = ROOT / "results.json"
-    output.write_text(json.dumps(all_rows, indent=2), encoding="utf-8")
+    # Measuring one tier must not delete the others. Keep any tier that was not
+    # asked for, so a partial run updates results.json instead of truncating it.
+    merged = all_rows
+    if output.exists():
+        previous = json.loads(output.read_text(encoding="utf-8"))
+        kept = [row for row in previous if row["tier"] not in wanted]
+        order = [tier for tier, _ in TIERS]
+        merged = sorted(kept + all_rows,
+                        key=lambda row: (order.index(row["tier"]), ORDER.index(row["language"])))
+        if kept:
+            print()
+            print(f"kept {len(kept)} rows for tiers that were not measured")
+    output.write_text(json.dumps(merged, indent=2), encoding="utf-8")
     print()
-    print(f"wrote {output}")
+    print(f"wrote {output} ({len(merged)} rows)")

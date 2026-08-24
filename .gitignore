@@ -30,6 +30,10 @@ store.json
 audit.log
 outbox.log
 
+# Bundler's local path setting, and the SBCL image the Lisp build dumps.
+.bundle/
+*.core
+
 # Editor and OS noise
 .vscode/
 .idea/

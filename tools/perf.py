@@ -62,6 +62,13 @@ READY_TIMEOUT = {"java": 90.0, "kotlin": 90.0, "csharp": 45.0, "python": 45.0,
                  "ruby": 45.0, "lisp": 60.0}
 
 
+def lisp_sources(tier: str) -> list[str]:
+    """The Lisp files to load, in dependency order. One module below the large tier."""
+    if tier == "large":
+        return ["domain.lisp", "store.lisp", "service.lisp", "api.lisp"]
+    return ["main.lisp"]
+
+
 def launch(tier: str, language: str):
     """Return (argv, cwd) for one implementation, or None when it is absent."""
     base = ROOT / TIER_DIR[tier] / language
@@ -85,10 +92,13 @@ def launch(tier: str, language: str):
         "zig": ([str(base / "main.exe")], ROOT),
         # Common Lisp runs from a core image with the dependencies already in it.
         # Loading them through Quicklisp on every boot would charge Lisp several
-        # seconds of cold start that no real deployment pays.
+        # seconds of cold start that no real deployment pays. The source files
+        # still load in dependency order, because the large tier is four modules
+        # and api.lisp alone would not find the packages below it.
         "lisp": (["sbcl", "--core", str(base / "deps.core"), "--noinform",
-                  "--non-interactive", "--no-userinit",
-                  "--load", str(base / f"{entry}.lisp")], ROOT),
+                  "--non-interactive", "--no-userinit"]
+                 + [arg for name in lisp_sources(tier)
+                    for arg in ("--load", str(base / name))], ROOT),
         "c": ([str(base / "taskservice.exe")], ROOT),
         "cpp": ([str(base / "taskservice.exe")], ROOT),
     }

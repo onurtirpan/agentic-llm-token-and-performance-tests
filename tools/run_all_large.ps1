@@ -87,7 +87,11 @@ Invoke-Case -Name "rust" -Exe ".\impl-large\rust\target\release\taskservice.exe"
 Invoke-Case -Name "zig" -Exe ".\impl-large\zig\main.exe" -WaitSeconds 2
 Invoke-Case -Name "lisp" -Exe "sbcl" `
     -Arguments @("--core", "impl-large/lisp/deps.core", "--noinform", "--non-interactive",
-                 "--no-userinit", "--load", "impl-large/lisp/api.lisp") -WaitSeconds 3
+                 "--no-userinit",
+                 "--load", "impl-large/lisp/domain.lisp",
+                 "--load", "impl-large/lisp/store.lisp",
+                 "--load", "impl-large/lisp/service.lisp",
+                 "--load", "impl-large/lisp/api.lisp") -WaitSeconds 3
 Invoke-Case -Name "c" -Exe ".\impl-large\c\taskservice.exe" -WaitSeconds 2
 Invoke-Case -Name "cpp" -Exe ".\impl-large\cpp\taskservice.exe" -WaitSeconds 2
 

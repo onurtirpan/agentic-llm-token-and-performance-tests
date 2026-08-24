@@ -783,6 +783,29 @@
   },
   {
     "tier": "large",
+    "language": "ruby",
+    "framework": "Sinatra",
+    "source": {
+      "files": 4,
+      "lines": 1224,
+      "codeLines": 969,
+      "characters": 39698,
+      "bytes": 39706,
+      "tokens": 9947,
+      "tokensCl100k": 9902
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 4,
+      "codeLines": 3,
+      "characters": 76,
+      "bytes": 76,
+      "tokens": 33,
+      "tokensCl100k": 32
+    }
+  },
+  {
+    "tier": "large",
     "language": "java",
     "framework": "Spring Boot",
     "source": {
@@ -802,6 +825,29 @@
       "bytes": 1094,
       "tokens": 324,
       "tokensCl100k": 312
+    }
+  },
+  {
+    "tier": "large",
+    "language": "kotlin",
+    "framework": "Spring Boot",
+    "source": {
+      "files": 4,
+      "lines": 1319,
+      "codeLines": 1117,
+      "characters": 51562,
+      "bytes": 51570,
+      "tokens": 11918,
+      "tokensCl100k": 11477
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 69,
+      "codeLines": 62,
+      "characters": 2049,
+      "bytes": 2049,
+      "tokens": 553,
+      "tokensCl100k": 529
     }
   },
   {
@@ -848,6 +894,29 @@
       "bytes": 0,
       "tokens": 0,
       "tokensCl100k": 0
+    }
+  },
+  {
+    "tier": "large",
+    "language": "lisp",
+    "framework": "Hunchentoot",
+    "source": {
+      "files": 4,
+      "lines": 1428,
+      "codeLines": 1203,
+      "characters": 60923,
+      "bytes": 60931,
+      "tokens": 14482,
+      "tokensCl100k": 14391
+    },
+    "manifest": {
+      "files": 1,
+      "lines": 5,
+      "codeLines": 4,
+      "characters": 322,
+      "bytes": 322,
+      "tokens": 99,
+      "tokensCl100k": 99
     }
   },
   {

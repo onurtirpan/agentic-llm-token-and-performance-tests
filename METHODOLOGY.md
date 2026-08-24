@@ -326,6 +326,45 @@ The honest summary: PHP's remaining numbers measure the shared-nothing execution
 model, not the language. A persistent runtime — Swoole, RoadRunner, FrankenPHP —
 removes per-request reconstruction entirely, and is not tested here.
 
+### Ruby's latency on this host is a platform floor, not a language result
+
+Ruby's measured p50 sits at roughly 15.5 ms at every tier, while its CPU cost per
+request is about 1.5 ms. The gap is not work. It is waiting.
+
+That number is one Windows timer tick, 15.6 ms, so the obvious suspicion is a
+scheduling artifact rather than anything Ruby computes. Peeling the stack away one
+layer at a time confirms it. Each row below answers `GET /health` on the same host,
+over a connection the client keeps open:
+
+| What is serving | p50 |
+| --- | ---: |
+| Sinatra 4 on Puma 6, our implementation | 15.1 ms |
+| A minimal Rack app on Puma, no Sinatra | 15.7 ms |
+| A minimal Rack app on WEBrick, no Puma | 15.8 ms |
+| A raw `TCPServer` loop: no Rack, no gem, `TCP_NODELAY` set | **15.4 ms** |
+| The Python reference, for contrast | 1.1 ms |
+
+The floor survives the removal of Sinatra, of Puma, of Rack, and of every gem. It
+is present in fourteen lines of standard-library Ruby. It is therefore a property
+of Ruby's IO scheduling on Windows, and **none of the frameworks involved deserve
+the blame for it**. Nor do we: keep-alive is working, the server never forces a
+reconnect, and Nagle is disabled.
+
+Two consequences for how Ruby is read here:
+
+1. **Ruby's latency and throughput figures measure this host, not the language.**
+   They are reported because hiding them would be worse, but they should not be
+   compared against the other thirteen. On Linux, where Ruby's IO layer does not
+   quantise this way, they would look completely different, and this study does
+   not measure that.
+2. **Ruby's CPU per request is still comparable**, because it counts work rather
+   than wall-clock waiting. That is the number to use for Ruby.
+
+This is the fourth handicap this study has found and the first one that could not
+be fixed. OPcache, the framework rebuild and the O(n) store were all ours. This
+one is the platform's, and the honest response is to label it rather than to
+quietly publish a ranking it corrupts.
+
 ### C and C++ were not using keep-alive
 
 Both sent `Connection: close` on every response, forcing a fresh TCP connection
